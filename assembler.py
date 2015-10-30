@@ -2,7 +2,7 @@ import sys
 import re
 
 instructionSet = {  "NOP"  : 0b00000000,                        # No operation
-                                         "MEM"  : 0b00000001,   # Used by assembler for laying out data memory. Not actual instruction.
+                                         "MEM"  : 0b00000001,   # Used by assembler for laying out data memory.
 
                     # Arithmetic and logic
                     "ADD"  : 0b00000010, "ADDI" : 0b00000011,   # OP1 = OP2 +  [OP3/IMM]
@@ -48,67 +48,130 @@ def replaceLabels(assembly, labels):
                 assembly[i][j] = labels[label]
     return assembly
 
-# TODO: Divide this into multiple functions, one for each type of instruction
-def assemble(assembly):
+def segregateMemory(assembly):
+    data = {}
+    instructions = []
+    for instruction in assembly:
+        if instruction[0] == "MEM":
+            data[int(instruction[1], 0)] = format(int(instruction[2], 0), "032b")
+        else:
+            instructions.append(instruction)
+
+    return (data, instructions)
+
+
+def preprocessor(assembly):
+    (memory, assembly) = segregateMemory(assembly)
     labels = findLabels(assembly)
     assembly = replaceLabels(assembly, labels)
+
+    return (memory, assembly)
+
+def assembleArithmetic(instruction):
+    opcode = instructionSet[instruction[0]]
+    machineCode  = (format(opcode, "08b"))
+    machineCode += format(int(instruction[1][1:]), "04b")
+    machineCode += format(int(instruction[2][1:]), "04b")
+    if opcode % 2 == 0:
+        machineCode += format(int(instruction[3][1:]), "04b")
+        machineCode += format(0, "012b")
+    else:
+        machineCode += format(int(instruction[3], 0), "016b")
+    return machineCode
+
+def assembleMemory(instruction):
+    opcode = instructionSet[instruction[0]]
+    machineCode  = (format(opcode, "08b"))
+    print "0"
+    print machineCode
+    instruction.pop(0)
+    machineCode += format(int(instruction[0][1:]), "04b")
+    instruction.pop(0)
+    print "1"
+    print machineCode
+    if opcode | 1 == 0x25 or opcode | 1 == 0x2B:    # LDA, LDAI, STA, STAI
+        machineCode += format(int(instruction[0][1:]), "04b")
+        print 2
+        print machineCode
+        if opcode % 2 == 0:
+            machineCode += format(int(instruction[1][1:]), "04b")
+            machineCode += format(0, "012b")
+            print 3
+            print machineCode
+        else:
+            machineCode += format(int(instruction[1][1:]), "016b")
+            print 4
+            print machineCode
+    elif opcode % 2 == 0:
+        machineCode += format(int(instruction[0][1:]), "04b")
+        machineCode += format(0, "016b")
+        print 5
+        print machineCode
+    else:
+        machineCode += format(int(instruction[0], 0), "020b")
+        print 6
+        print machineCode
+    return machineCode
+
+def assembleFlowControl(instruction):
+    opcode = instructionSet[instruction[0]]
+    machineCode  = (format(opcode, "08b"))
+    if   opcode == 0x42:    # BR
+        machineCode += format(int(instruction[1][1:]), "04b")
+        machineCode += format(0, "020b")
+    elif opcode == 0x43:    # BRI
+        machineCode += format(int(instruction[1], 0), "024b")
+    elif opcode == 0x4C:    # BRZ
+        machineCode += format(int(instruction[1][1:]), "04b")
+        machineCode += format(int(instruction[2][1:]), "04b")
+        machineCode += format(0, "020b")
+    elif opcode == 0x4D:    # BRZI
+        machineCode += format(int(instruction[1][1:]), "04b")
+        machineCode += format(int(instruction[2], 0), "020b")
+    else:
+        machineCode += format(int(instruction[1][1:]), "04b")
+        machineCode += format(int(instruction[2][1:]), "04b")
+        if opcode % 2 == 0:
+            machineCode += format(int(instruction[3][1:]), "04b")
+            machineCode += format(0, "012b")
+        else:
+            machineCode += format(int(instruction[3], 0), "016b")
+
+    return machineCode    
+
+# TODO: Divide this into multiple functions, one for each type of instruction
+def assemble(assembly):
+    assembly = [x.split() for x in assembly.upper().split("\n") if x != ""]
+    (memory, assembly) = preprocessor(assembly)
+
     machineCode = [] 
     for i in range(len(assembly)):
         instruction = assembly[i]
         opcode = instructionSet[instruction[0]]
-        
         print "Current instruction: "
         print instruction
-        machineCode.append(format(opcode, "08b"))
         
-        if opcode == 0x00:          # No operation
-            machineCode[i] = format(0, "032b")
-        #elif opcode == 0x01:        # Memory psuedo-instruction
-        
-        elif opcode < 0x20:         # Arithmetic and logic
-            machineCode[i] += format(int(instruction[1][1:]), "04b")
-            machineCode[i] += format(int(instruction[2][1:]), "04b")
-            if opcode % 2 == 0:
-                machineCode[i] += format(int(instruction[3][1:]), "04b")
-                machineCode[i] += format(0, "012b")
-            else:
-                machineCode[i] += format(int(instruction[3], 0), "016b")
+        if opcode == 0x00:
+            machineCode.append(format(0, "032b"))
+            print ""
+        elif opcode < 0x20:
+            machineCode.append(assembleArithmetic(instruction))
+            print machineCode[-1]
+        elif opcode < 0x40:
+            machineCode.append(assembleMemory(instruction))
+            print machineCode[-1]
+        else:
+            machineCode.append(assembleFlowControl(instruction))
+            print machineCode[-1]
+         
+    finalString = ""
+    for i in range(len(memory)):
+        finalString += memory[i] + "\n"
+   
+    finalString += "---" + "\n" 
+    finalString += "\n".join(machineCode)
 
-        elif opcode < 0x40:         # Memory operations
-            instruction.pop(0)
-            machineCode[i] += format(int(instruction[0][1:]), "04b")
-            instruction.pop(0)
-
-            if opcode | 1 == 0x25 or opcode | 1 == 0x2B:
-                machineCode[i] += format(int(instruction[0][1:]), "04b")
-                instruction.pop(0)
-            if opcode % 2 == 0:
-                machineCode[i] += format(int(instruction[0][1:]), "04b")
-            elif opcode | 1 == 0x25 or opcode | 1 == 0x2B:
-                machineCode[i] += format(int(instruction[0], 0), "016b")
-            else:
-                machineCode[i] += format(int(instruction[0], 0), "020b")
-                    
-        else:                       # Flow control operations
-            if   opcode == 0x42:    # BR
-                machineCode[i] += format(int(instruction[1][1:]), "04b")
-            elif opcode == 0x43:    # BRI
-                machineCode[i] += format(int(instruction[1], 0), "024b")
-            elif opcode == 0x4C:    # BRZ
-                machineCode[i] += format(int(instruction[1][1:]), "04b")
-                machineCode[i] += format(int(instruction[2][1:]), "04b")
-            elif opcode == 0x4D:    # BRZI
-                machineCode[i] += format(int(instruction[1][1:]), "04b")
-                machineCode[i] += format(int(instruction[2], 0), "020b")
-            else:
-                machineCode[i] += format(int(instruction[1][1:]), "04b")
-                machineCode[i] += format(int(instruction[2][1:]), "04b")
-                if opcode % 2 == 0:
-                    machineCode[i] += format(int(instruction[3][1:]), "04b")
-                else:
-                    machineCode[i] += format(int(instruction[3], 0), "016b")
-
-    return machineCode
+    return finalString
 
 def main():
     filename = sys.argv[1]
@@ -116,9 +179,11 @@ def main():
 
     with open(filename, 'r') as instructionFile:
        assembly = instructionFile.read()
-    assembly = [x.split() for x in assembly.upper().split("\n") if x != ""]
 
-    print assemble(assembly)
+    machineCode = assemble(assembly)
+    
+    with open(filename.split('.')[0] + ".out", 'w') as outFile:
+        outFile.write(machineCode)
 
 if __name__ == "__main__":
     main()
