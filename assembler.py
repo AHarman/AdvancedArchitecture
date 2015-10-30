@@ -34,7 +34,7 @@ def findLabels(assembly):
     for i in range(len(assembly)):
         instruction = assembly[i]
         if re.search(r'^"\w+"$', instruction[-1]) != None:
-            labels[instruction[-1][1:-1]] = i
+            labels[instruction[-1][1:-1]] = str(i)
             assembly[i] = instruction[:-1]
     return labels
 
@@ -118,7 +118,7 @@ def main():
        assembly = instructionFile.read()
     assembly = [x.split() for x in assembly.upper().split("\n") if x != ""]
 
-    assemble(assembly)
+    print assemble(assembly)
 
 if __name__ == "__main__":
     main()
