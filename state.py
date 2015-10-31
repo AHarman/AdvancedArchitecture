@@ -1,8 +1,6 @@
 import numpy as np
 memory = np.zeros(256, dtype=np.uint32)
 instructions = np.zeros(256, dtype=np.uint32)
-registers = np.zeros(16, dtype=np.uint32)
-programCounter = np.uint32(0)
 
 # Used for debugging
 instructionText = {
