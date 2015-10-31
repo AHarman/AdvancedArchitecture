@@ -85,35 +85,21 @@ def assembleArithmetic(instruction):
 def assembleMemory(instruction):
     opcode = instructionSet[instruction[0]]
     machineCode  = (format(opcode, "08b"))
-    print "0"
-    print machineCode
     instruction.pop(0)
     machineCode += format(int(instruction[0][1:]), "04b")
     instruction.pop(0)
-    print "1"
-    print machineCode
     if opcode | 1 == 0x25 or opcode | 1 == 0x2B:    # LDA, LDAI, STA, STAI
         machineCode += format(int(instruction[0][1:]), "04b")
-        print 2
-        print machineCode
         if opcode % 2 == 0:
             machineCode += format(int(instruction[1][1:]), "04b")
             machineCode += format(0, "012b")
-            print 3
-            print machineCode
         else:
             machineCode += format(int(instruction[1][1:]), "016b")
-            print 4
-            print machineCode
     elif opcode % 2 == 0:
         machineCode += format(int(instruction[0][1:]), "04b")
         machineCode += format(0, "016b")
-        print 5
-        print machineCode
     else:
         machineCode += format(int(instruction[0], 0), "020b")
-        print 6
-        print machineCode
     return machineCode
 
 def assembleFlowControl(instruction):
@@ -159,7 +145,6 @@ def assemble(assembly):
             machineCode.append(format(0xFFFFFFFF, "032b"))
         elif opcode < 0x20:
             machineCode.append(assembleArithmetic(instruction))
-            print machineCode[-1]
         elif opcode < 0x40:
             machineCode.append(assembleMemory(instruction))
             print machineCode[-1]
