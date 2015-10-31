@@ -66,10 +66,15 @@ def execute(opcode, operands, immediate):
     return
 
 def executeProgram():
-    currentInstruction = fetch()
-    (opcode, operands, immediate) = decode(currentInstruction)
-    print decode(currentInstruction)
-    execute(opcode, operands, immediate)
+    global programCounter
+    opcode = 0
+    while opcode != 0xFF:
+        currentInstruction = fetch()
+        (opcode, operands, immediate) = decode(currentInstruction)
+        print format(int(currentInstruction), "032b")
+        print decode(currentInstruction)
+        execute(opcode, operands, immediate)
+        programCounter += 1
     return
 
 def main():
