@@ -20,11 +20,61 @@ def loadProgram(filename):
         instructions[i] = np.int32(int(instructionsIn[i], 2))
 
 
+def fetch():
+    return instructions[programCounter]
+
+def decode(instruction):
+    instruction = format(int(instruction), "032b")
+    opcode = np.uint8(int(instruction[:8], 2))
+    operands = None
+    immediate = None
+    
+    if opcode == 0x00:                              # No op
+        return 0x00, None, None
+    if opcode == 0xFF:                              # Terminate
+        return 0xFF, None, None
+
+    if ((opcode > 0x01 and opcode <= 0x0F) or 
+        (opcode | 1 == 0x25) or 
+        (opcode | 1 == 0x2B) or 
+        (opcode > 0x43 and opcode <= 0x4C)):
+        if opcode % 1 == 0:
+            operands  = [np.uint8(int(instruction[ 8:12], 2)),
+                         np.uint8(int(instruction[12:16], 2)),
+                         np.uint8(int(instruction[16:20], 2))]
+        else:
+            operands  = [np.uint8(int(instruction[ 8:12], 2)),
+                         np.uint8(int(instruction[12:16], 2))]
+            immediate = np.uint32(int(instruction[16:  ], 2))
+    elif (opcode < 0x42 or
+          opcode | 1 == 0x4D):
+        if opcode % 1 == 0:
+            operands =  [np.uint8(int(instruction[ 8:12], 2)),
+                         np.uint8(int(instruction[12:16], 2))]
+        else:
+            operands  = [np.uint8(int(instruction[ 8:12], 2))]
+            immediate = np.uint32(int(instruction[12:  ], 2))
+    elif opcode % 2 == 0:                           # Instruction with 1 register
+        operands  = [np.uint8(int(instruction[ 8:12], 2))]
+        immediate = np.uint32(int(instruction[12:  ], 2))
+    else:                                           # Instruction with no registers
+        immediate = np.uint32(int(instruction[ 8:  ], 2))
+    
+    return (opcode, operands, immediate)
+
+def execute(opcode, operands, immediate):
+    return
+
 def executeProgram():
+    currentInstruction = fetch()
+    (opcode, operands, immediate) = decode(currentInstruction)
+    print decode(currentInstruction)
+    execute(opcode, operands, immediate)
     return
 
 def main():
     loadProgram(sys.argv[1])
+    executeProgram()
     return
 
 if __name__ == "__main__":
