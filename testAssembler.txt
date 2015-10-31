@@ -2,11 +2,13 @@ MEM     0 0xDEAD
 MEM     1 0xDEADBEEF
 
 LDI     R0 0
-MVI     R1 0xBEEF 
-MVI     R9 1
-LD      R3 R9
+MVI     R1 0xBEEF
+MVI     R2 1
+LD      R2 R2
 LSI     R0 R0 1     "MyLabel"
-ADD     R2 R0 R1
+ADD     R3 R0 R1
 
 BRNI    R2 R3 >MyLabel
+STI     R2 255
+
 TERMINATE
