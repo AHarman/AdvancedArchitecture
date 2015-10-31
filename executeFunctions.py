@@ -1,6 +1,103 @@
 from functools import partial
 from operator import *
+from state import *
 
+def noop(*args):
+    return
+
+def arithmetic(operands, immediate, operation=None, imm=False):
+    global registers
+    if imm:
+        registers[operands[0]] = operation(registers[operands[1]], immediate)
+    else:
+        registers[operands[0]] = operation(registers[operands[1]], registers[operands[2]])
+    return
+
+def LD(operands, immediate):
+    global registers
+    global memory
+    registers[operands[0]] = memory[registers[operands[1]]]
+    return
+def LDI(operands, immediate):
+    global registers
+    global memory
+    print registers
+    print operands
+    print immediate
+    registers[operands[0]] = memory[immediate]
+    return
+def LDA(operands, immediate):
+    global registers
+    global memory
+    registers[operands[0]] = memory[registers[operands[1]] + registers[operands[2]]]
+    return
+def LDAI(operands, immediate):
+    global registers
+    global memory
+    registers[operands[0]] = memory[registers[operands[1]] + immediate]
+    return
+def MV(operands, immediate):
+    global registers
+    global memory
+    registers[operands[0]] = memory[registers[operands[1]]]
+    return
+def MVI(operands, immediate):
+    global registers
+    registers[operands[0]] = immediate
+    return
+def ST(operands, immediate):
+    global registers
+    global memory
+    memory[registers[operands[1]]] = registers[operands[0]]
+    return
+def STI(operands, immediate):
+    global registers
+    global memory
+    memory[immediate] = registers[operands[0]]
+    return
+def STA(operands, immediate):
+    global registers
+    global memory
+    memory[registers[operands[1]] + registers[operands[2]]] = registers[operands[0]]
+    return
+def STAI(operands, immediate):
+    global registers
+    global memory
+    memory[registers[operands[1]] + immediate] = registers[operands[0]]
+    return
+
+def branch(address):
+    global programCounter
+    programCounter = address
+    return
+
+def branchComp(operands, immediate, operation=None, imm=False):
+    global registers
+    if operation(registers[operands[0]], registers[operands[1]]):
+        if imm:
+            address = np.uint32(immediate)
+        else:
+            address = np.uint32(registers[operands[2]])
+        branch(address)
+    return
+
+def BR(operands, immediate):
+    global registers
+    branch(registers[operands[0]])
+    return
+def BRI(operands, immediate):
+    branch(immediate)
+    return
+def BRZ(operands, immediate):
+    global registers
+    if registers[operands[0]] == 0:
+        branch(operands[1])
+    return
+def BRZI(operands, immediate):
+    global registers
+    if registers[operands[0]] == 0:
+        branch(immediate)
+    return
 
 lookup = {  0x00 : noop,
             0x02 : partial(arithmetic, operation=add),    0x03 : partial(arithmetic, operation=add,    imm=True),   # OP1 = OP2 +  [OP3/IMM]
@@ -25,73 +122,3 @@ lookup = {  0x00 : noop,
             0x4C : BRZ,                               0x4D : BRZI,                                          # If OP1 == 0   to address [OP2/IMM]
 
             0xFF : noop}
-
-def noop(*args):
-    return
-
-def arithmetic(operands, immediate, operation=None, imm=False):
-    if imm:
-        registers[operands[0]] = operation(registers[operands[1]], immediate)
-    else:
-        registers[operands[0]] = operation(registers[operands[1]], registers[operands[2]])
-    return
-
-def LD(operands, immediate):
-    registers[operands[0]] = memory[registers[operands[1]]]
-    return
-def LDI(operands, immediate):
-    registers[operands[0]] = memory[immediate]
-    return
-def LDA(operands, immediate):
-    registers[operands[0]] = memory[registers[operands[1]] + registers[operands[2]]]
-    return
-def LDAI(operands, immediate):
-    registers[operands[0]] = memory[registers[operands[1]] + immediate]
-    return
-def MV(operands, immediate):
-    registers[operands[0]] = memory[registers[operands[1]]]
-    return
-def MVI(operands, immediate):
-    registers[operands[0]] = immediate
-    return
-def ST(operands, immediate):
-    memory[registers[operands[1]]] = registers[operands[0]]
-    return
-def STI(operands, immediate):
-    memory[immediate] = registers[operands[0]]
-    return
-def STA(operands, immediate):
-    memory[registers[operands[1]] + registers[operands[2]] = registers[operands[0]]
-    return
-def STAI(operands, immediate):
-    memory[registers[operands[1]] + immediate] = registers[operands[0]]
-    return
-
-def branch(address):
-    programCounter = address
-    return
-
-def branchComp(operands, immediate, operation=None, imm=False)
-    if operation(operands[0], operands[1]):
-        if imm:
-            address = np.uint32(immediate)
-        else:
-            address = np.uint32(operands[2])
-        branch(address)
-    return
-
-def BR(operands, immediate):
-    branch(registers[operands[0]])
-    return
-def BRI(operands, immediate):
-    branch(immediate)
-    return
-def BRZ(operands, immediate):
-    if registers[operands[0]] == 0:
-        branch(operands[1])
-    return
-def BRZI(operands, immediate):
-    if registers[operands[0]] == 0:
-        branch(immediate)
-    return
-

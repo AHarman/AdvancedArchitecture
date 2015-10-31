@@ -1,10 +1,7 @@
 import sys
 import numpy as np
-
-memory = np.zeros(1024, dtype=np.int32)
-instructions = np.zeros(1024, dtype=np.uint32)
-registers = np.zeros(16, dtype=np.int32)
-programCounter = np.uint32(0)
+from state import *
+from executeFunctions import *
 
 def loadProgram(filename):
     with open(filename) as f:
@@ -34,35 +31,43 @@ def decode(instruction):
     if opcode == 0xFF:                              # Terminate
         return 0xFF, None, None
 
-    if ((opcode > 0x01 and opcode <= 0x0F) or 
+    if ((opcode > 0x01 and opcode <= 0x0F) or                   # Instructions with 3 registers 
         (opcode | 1 == 0x25) or 
         (opcode | 1 == 0x2B) or 
         (opcode > 0x43 and opcode <= 0x4C)):
         if opcode % 1 == 0:
+            print "3"
             operands  = [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2)),
                          np.uint8(int(instruction[16:20], 2))]
         else:
+            print "2 + 1"
             operands  = [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2))]
             immediate = np.uint32(int(instruction[16:  ], 2))
-    elif (opcode < 0x42 or
+    elif (opcode < 0x42 or                                      # Instructions with 2 registers
           opcode | 1 == 0x4D):
+        print opcode
         if opcode % 1 == 0:
+            print "2"
             operands =  [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2))]
         else:
+            print "1 + 1"
             operands  = [np.uint8(int(instruction[ 8:12], 2))]
             immediate = np.uint32(int(instruction[12:  ], 2))
-    elif opcode % 2 == 0:                           # Instruction with 1 register
+    elif opcode % 2 == 0:                                       # Instructions with 1 register
+        print "1"
         operands  = [np.uint8(int(instruction[ 8:12], 2))]
         immediate = np.uint32(int(instruction[12:  ], 2))
-    else:                                           # Instruction with no registers
+    else:                                                       # Instructions with no registers
+        print "0 + 1"
         immediate = np.uint32(int(instruction[ 8:  ], 2))
     
     return (opcode, operands, immediate)
 
 def execute(opcode, operands, immediate):
+    lookup[opcode](operands, immediate)
     return
 
 def executeProgram():
@@ -71,8 +76,7 @@ def executeProgram():
     while opcode != 0xFF:
         currentInstruction = fetch()
         (opcode, operands, immediate) = decode(currentInstruction)
-        print format(int(currentInstruction), "032b")
-        print decode(currentInstruction)
+        print (format(int(opcode), "08b"), operands, immediate)
         execute(opcode, operands, immediate)
         programCounter += 1
     return
