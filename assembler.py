@@ -26,7 +26,10 @@ instructionSet = {  "NOP"  : 0b00000000,                        # No operation
                     "BRN"  : 0b01000110, "BRNI" : 0b01000111,   # Branch if OP1 != OP2 to memory address [OP3/IMM]
                     "BRL"  : 0b01001000, "BRLI" : 0b01001001,   # Branch if OP1 <  OP2 to memory address [OP3/IMM]
                     "BRG"  : 0b01001010, "BRGI" : 0b01001011,   # Branch if OP1 >  OP2 to memory address [OP3/IMM]
-                    "BRZ"  : 0b01001100, "BRZI" : 0b01001101}   # Branch if OP1 == 0   to memory address [OP2/IMM]
+                    "BRZ"  : 0b01001100, "BRZI" : 0b01001101,   # Branch if OP1 == 0   to memory address [OP2/IMM]
+
+                    # Terminate program
+                    "TERMINATE" : 0b11111111}                   # Terminates program
 
 def findLabels(assembly):
     labels = {}
@@ -139,7 +142,6 @@ def assembleFlowControl(instruction):
 
     return machineCode    
 
-# TODO: Divide this into multiple functions, one for each type of instruction
 def assemble(assembly):
     assembly = [x.split() for x in assembly.upper().split("\n") if x != ""]
     (memory, assembly) = preprocessor(assembly)
@@ -153,7 +155,8 @@ def assemble(assembly):
         
         if opcode == 0x00:
             machineCode.append(format(0, "032b"))
-            print ""
+        elif opcode == 0xFF:
+            machineCode.append(format(0xFFFFFFFF, "032b"))
         elif opcode < 0x20:
             machineCode.append(assembleArithmetic(instruction))
             print machineCode[-1]
@@ -171,7 +174,7 @@ def assemble(assembly):
     finalString += "---" + "\n" 
     finalString += "\n".join(machineCode)
 
-    return finalString
+    return finalString + "\n"
 
 def main():
     filename = sys.argv[1]

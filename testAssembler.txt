@@ -9,3 +9,4 @@ LSI     R0 R0 1     "MyLabel"
 ADD     R2 R0 R1
 
 BRNI    R2 R3 >MyLabel
+TERMINATE
