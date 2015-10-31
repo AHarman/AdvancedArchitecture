@@ -30,38 +30,30 @@ def decode(instruction):
         return 0x00, None, None
     if opcode == 0xFF:                              # Terminate
         return 0xFF, None, None
-
+    print "Number of registers is: "
     if ((opcode > 0x01 and opcode <= 0x0F) or                   # Instructions with 3 registers 
         (opcode | 1 == 0x25) or 
         (opcode | 1 == 0x2B) or 
         (opcode > 0x43 and opcode <= 0x4C)):
-        if opcode % 1 == 0:
-            print "3"
+        if opcode % 2 == 0:
             operands  = [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2)),
                          np.uint8(int(instruction[16:20], 2))]
         else:
-            print "2 + 1"
             operands  = [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2))]
             immediate = np.uint32(int(instruction[16:  ], 2))
-    elif (opcode < 0x42 or                                      # Instructions with 2 registers
-          opcode | 1 == 0x4D):
-        print opcode
-        if opcode % 1 == 0:
-            print "2"
+    elif (opcode < 0x42 or  opcode | 1 == 0x4D):                # Instructions with 2 registers
+        if opcode % 2 == 0:
             operands =  [np.uint8(int(instruction[ 8:12], 2)),
                          np.uint8(int(instruction[12:16], 2))]
         else:
-            print "1 + 1"
             operands  = [np.uint8(int(instruction[ 8:12], 2))]
             immediate = np.uint32(int(instruction[12:  ], 2))
     elif opcode % 2 == 0:                                       # Instructions with 1 register
-        print "1"
         operands  = [np.uint8(int(instruction[ 8:12], 2))]
         immediate = np.uint32(int(instruction[12:  ], 2))
     else:                                                       # Instructions with no registers
-        print "0 + 1"
         immediate = np.uint32(int(instruction[ 8:  ], 2))
     
     return (opcode, operands, immediate)

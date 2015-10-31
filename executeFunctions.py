@@ -21,9 +21,6 @@ def LD(operands, immediate):
 def LDI(operands, immediate):
     global registers
     global memory
-    print registers
-    print operands
-    print immediate
     registers[operands[0]] = memory[immediate]
     return
 def LDA(operands, immediate):
