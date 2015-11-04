@@ -1,36 +1,37 @@
 from functools import partial
 from operator import *
 from state import *
+from instruction import Instruction
 
 class ExecuteUnit():
     def __init__(self):
         self.reg = np.zeros(16, dtype=np.uint32)
         self.programCounter = np.uint32(0)
-        self.pipeline = []
+        self.pipeline = []      # TODO: This is a list of Instruction objects used as a queue
         self.finished = False
         self.logString = ""
         
         self.lookup = { 0x00 : self.noop,
-                        0x02 : partial(self.arith, operation=add),    0x03 : partial(self.arith, operation=add,    imm=True),
-                        0x04 : partial(self.arith, operation=sub),    0x05 : partial(self.arith, operation=sub,    imm=True),
-                        0x06 : partial(self.arith, operation=mul),    0x07 : partial(self.arith, operation=mul,    imm=True),
-                        0x08 : partial(self.arith, operation=and_),   0x09 : partial(self.arith, operation=and_,   imm=True),
-                        0x0A : partial(self.arith, operation=or_),    0x0B : partial(self.arith, operation=or_,    imm=True),
-                        0x0C : partial(self.arith, operation=lshift), 0x0D : partial(self.arith, operation=lshift, imm=True),
-                        0x0E : partial(self.arith, operation=rshift), 0x0F : partial(self.arith, operation=rshift, imm=True),
+                        0x02 : partial(self.arith, op=add),    0x03 : partial(self.arith, op=add),
+                        0x04 : partial(self.arith, op=sub),    0x05 : partial(self.arith, op=sub),
+                        0x06 : partial(self.arith, op=mul),    0x07 : partial(self.arith, op=mul),
+                        0x08 : partial(self.arith, op=and_),   0x09 : partial(self.arith, op=and_),
+                        0x0A : partial(self.arith, op=or_),    0x0B : partial(self.arith, op=or_),
+                        0x0C : partial(self.arith, op=lshift), 0x0D : partial(self.arith, op=lshift),
+                        0x0E : partial(self.arith, op=rshift), 0x0F : partial(self.arith, op=rshift),
 
-                        0x22 : self.LD,  0x23 : self.LDI,
-                        0x24 : self.LDA, 0x25 : self.LDAI,
-                        0x26 : self.MV,  0x27 : self.MVI,
-                        0x28 : self.ST,  0x29 : self.STI,
-                        0x2A : self.STA, 0x2A : self.STAI,
+                        0x22 : self.LD,  0x23 : self.LD,
+                        0x24 : self.LDA, 0x25 : self.LDA,
+                        0x26 : self.MV,  0x27 : self.MV,
+                        0x28 : self.ST,  0x29 : self.ST,
+                        0x2A : self.STA, 0x2A : self.STA,
     
-                        0x42 : self.BR,                                0x43 : self.BRI,
-                        0x44 : partial(self.branchComp, operation=eq), 0x45 : partial(self.branchComp, operation=eq, imm=True),
-                        0x46 : partial(self.branchComp, operation=ne), 0x47 : partial(self.branchComp, operation=ne, imm=True),
-                        0x48 : partial(self.branchComp, operation=lt), 0x49 : partial(self.branchComp, operation=lt, imm=True),
-                        0x4A : partial(self.branchComp, operation=gt), 0x4B : partial(self.branchComp, operation=gt, imm=True),
-                        0x4C : self.BRZ,                               0x4D : self.BRZI,
+                        0x42 : self.BR,                         0x43 : self.BR,
+                        0x44 : partial(self.branchComp, op=eq), 0x45 : partial(self.branchComp, op=eq),
+                        0x46 : partial(self.branchComp, op=ne), 0x47 : partial(self.branchComp, op=ne),
+                        0x48 : partial(self.branchComp, op=lt), 0x49 : partial(self.branchComp, op=lt),
+                        0x4A : partial(self.branchComp, op=gt), 0x4B : partial(self.branchComp, op=gt),
+                        0x4C : self.BR,                         0x4D : self.BRZ,
     
                         0xFF : self.terminate}
     
@@ -42,133 +43,99 @@ class ExecuteUnit():
 
     def run(self):
         instruction = self.fetch()
-        (opcode, operands, immediate) = self.decode(instruction)
-        self.execute(opcode, operands, immediate)
-        
-        
+        instruction.decode()
+        self.execute(instruction)
 
     def fetch(self):
         self.programCounter += 1
-        return instructions[self.programCounter - 1]
+        return Instruction(instructions[self.programCounter - 1])
 
-    def decode(self, instruction):
-        instruction = format(int(instruction), "032b")
-        opcode = np.uint8(int(instruction[:8], 2))
-        immediate = 0
-    
-        if opcode == 0x00:                                          # No op
-            return 0x00, [], 0
-        if opcode == 0xFF:                                          # Terminate
-            return 0xFF, [], 0
-        if ((opcode > 0x01 and opcode <= 0x0F) or                   # Instructions with 3 registers 
-            (opcode | 1 == 0x25) or 
-            (opcode | 1 == 0x2B) or 
-            (opcode > 0x43 and opcode <= 0x4C)):
-            if opcode % 2 == 0:
-                operands  = [np.uint8(int(instruction[ 8:12], 2)),
-                             np.uint8(int(instruction[12:16], 2)),
-                             np.uint8(int(instruction[16:20], 2))]
-            else:
-                operands  = [np.uint8(int(instruction[ 8:12], 2)),
-                             np.uint8(int(instruction[12:16], 2))]
-                immediate = np.uint32(int(instruction[16:  ], 2))
-        elif (opcode < 0x42 or  opcode | 1 == 0x4D):                # Instructions with 2 registers
-            if opcode % 2 == 0:
-                operands =  [np.uint8(int(instruction[ 8:12], 2)),
-                             np.uint8(int(instruction[12:16], 2))]
-            else:
-                operands  = [np.uint8(int(instruction[ 8:12], 2))]
-                immediate = np.uint32(int(instruction[12:  ], 2))
-        elif opcode % 2 == 0:                                       # Instructions with 1 register
-            operands  = [np.uint8(int(instruction[ 8:12], 2))]
-            immediate = np.uint32(int(instruction[12:  ], 2))
-        else:                                                       # Instructions with no registers
-            immediate = np.uint32(int(instruction[ 8:  ], 2))
-    
-        return (opcode, operands, immediate)
-
-    def execute(self, opcode, operands, immediate):
-        self.lookup[opcode](operands, immediate)
+    def execute(self, instruction):
+        print "Execute: " + str(instruction)
+        self.lookup[instruction.opcode](instruction)
         return
 
     def noop(*args):
         return
 
-    def arith(self, operands, immediate, operation=None, imm=False):
-        if imm:
-            self.reg[operands[0]] = operation(self.reg[operands[1]], immediate)
+    def arith(self, instr, op=None):
+        if instr.immediate != None:
+            self.reg[instr.registers[0]] = op(self.reg[instr.registers[1]], instr.immediate)
         else:
-            self.reg[operands[0]] = operation(self.reg[operands[1]], self.reg[operands[2]])
+            self.reg[instr.registers[0]] = op(self.reg[instr.registers[1]], self.reg[instr.registers[2]])
         return
     
-    def LD(self, operands, immediate):
+    def LD(self, instr):
         global memory
-        self.reg[operands[0]] = memory[self.reg[operands[1]]]
+        if instr.immediate != None:
+            self.reg[instr.registers[0]] = memory[instr.immediate]
+        else:
+            self.reg[instr.registers[0]] = memory[self.reg[instr.registers[1]]]
         return
-    def LDI(self, operands, immediate):
+
+    def LDA(self, instr):
         global memory
-        self.reg[operands[0]] = memory[immediate]
+        if instr.immediate != None:
+            self.reg[instr.registers[0]] = memory[self.reg[instr.registers[1]] + instr.immediate]
+        else:
+            self.reg[instr.registers[0]] = memory[self.reg[instr.registers[1]] + self.reg[instr.registers[2]]]
         return
-    def LDA(self, operands, immediate):
+
+    def MV(self, instr):
         global memory
-        self.reg[operands[0]] = memory[self.reg[operands[1]] + self.reg[operands[2]]]
-        return
-    def LDAI(self, operands, immediate):
-        global memory
-        self.reg[operands[0]] = memory[self.reg[operands[1]] + immediate]
-        return
-    def MV(self, operands, immediate):
-        global memory
-        self.reg[operands[0]] = memory[self.reg[operands[1]]]
-        return
-    def MVI(self, operands, immediate):
-        self.reg[operands[0]] = immediate
-        return
-    def ST(self, operands, immediate):
-        global memory
-        memory[self.reg[operands[1]]] = self.reg[operands[0]]
-        return
-    def STI(self, operands, immediate):
-        global memory
-        memory[immediate] = self.reg[operands[0]]
-        return
-    def STA(self, operands, immediate):
-        global memory
-        memory[self.reg[operands[1]] + self.reg[operands[2]]] = self.reg[operands[0]]
-        return
-    def STAI(self, operands, immediate):
-        global memory
-        memory[self.reg[operands[1]] + immediate] = self.reg[operands[0]]
+        if instr.immediate != None:
+            self.reg[instr.registers[0]] = instr.immediate
+        else:
+            self.reg[instr.registers[0]] = memory[self.reg[instr.registers[1]]]
         return
     
+    def ST(self, instr):
+        global memory
+        if instr.immediate != None:
+            memory[instr.immediate] = self.reg[instr.registers[0]]
+        else:
+            memory[self.reg[instr.registers[1]]] = self.reg[instr.registers[0]]
+    
+    def STA(self, instr):
+        global memory
+        if instr.immediate != None:
+            memory[self.reg[instr.registers[1]] + instr.immediate] = self.reg[instr.registers[0]]
+        else:
+            memory[self.reg[instr.registers[1]] + self.reg[instr.registers[2]]] = self.reg[instr.registers[0]]
+        return
+    
+    # TODO: Clear pipeline
     def branch(self, address):
         self.programCounter = address
         return
     
-    def branchComp(self, operands, immediate, operation=None, imm=False):
-        if operation(self.reg[operands[0]], self.reg[operands[1]]):
-            if imm:
-                address = np.uint32(immediate)
+    # TODO: Expand, if op=None do BR
+    def branchComp(self, instr, op=None):
+        if op(self.reg[instr.registers[0]], self.reg[instr.registers[1]]):
+            if instr.immediate != None:
+                address = np.uint32(instr.immediate)
             else:
-                address = np.uint32(self.reg[operands[2]])
+                address = np.uint32(self.reg[instr.registers[2]])
             self.branch(address)
         return
     
-    def BR(self, operands, immediate):
-        self.branch(self.reg[operands[0]])
+    def BR(self, instr):
+        if instr.immediate != None:
+            self.branch(self, instr.immediate)
+        else:
+            self.branch(self.reg[instr.registers[0]])
         return
-    def BRI(self, operands, immediate):
-        self.branch(self, immediate)
-        return
-    def BRZ(self, operands, immediate):
-        if self.reg[operands[0]] == 0:
-            self.branch(self, self.reg(operands[1]))
-        return
-    def BRZI(self, operands, immediate):
-        if self.reg[operands[0]] == 0:
-            self.branch(self, immediate)
+    
+    def BRZ(self, instr):
+        if instr.immediate != None:
+            address = instr.immediate
+        else:
+            address = self.reg(instr.registers[1])
+        if self.reg[instr.registers[0]] == 0:
+            self.branch(self, address)
         return
 
-    def terminate(self, operands, immediate):
+    def terminate(self, instr):
         self.finished = True
+        return
         
