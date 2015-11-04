@@ -2,10 +2,11 @@ from functools import partial
 from operator import *
 from state import *
 
-class executeUnit():
+class ExecuteUnit():
     def __init__(self):
         self.reg = np.zeros(16, dtype=np.uint32)
         self.programCounter = np.uint32(0)
+        self.pipeline = []
         self.finished = False
         self.logString = ""
         

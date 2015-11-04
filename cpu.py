@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from state import *
-from executeUnit import executeUnit
+from executeUnit import ExecuteUnit
 
 def memToString():
     global memory
@@ -27,7 +27,7 @@ def loadProgram(filename):
 
 def executeProgram():
     logString = ""
-    unit1 = executeUnit()
+    unit1 = ExecuteUnit()
     while unit1.finished == False:
         unit1.run() 
         logString += memToString() + "\n\n" + unit1.regToString() + "\n\n**********\n\n" 
