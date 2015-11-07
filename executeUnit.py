@@ -91,9 +91,6 @@ class ExecuteUnit():
 
         return self.finished
     
-    def progressQueue(self):
-        return
-
     def fetch(self):
         instruction = Instruction(instructions[self.programCounter])
         self.pipeline.append(instruction)
