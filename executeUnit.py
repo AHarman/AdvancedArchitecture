@@ -9,10 +9,11 @@ class ExecuteUnit():
         self.reg = np.zeros(16, dtype=np.uint32)
         
         # Special regs
-        self.loadReg = np.uint32(0)              # When something comes in from memory, it goes here
-        self.loadAddressReg = np.uint32(0)       # What address in memory we're fetching from
-        self.storeReg = np.uint32(0)             # What to store in memory
-        self.storeAddressReg = np.uint32(0)      # Where to store it in memory
+        self.loadReg = np.uint32(0)             # When something comes in from memory, it goes here
+        self.loadAddressReg = np.uint32(0)      # What address in memory we're fetching from
+        self.storeReg = np.uint32(0)            # What to store in memory
+        self.storeAddressReg = np.uint32(0)     # Where to store it in memory
+        self.resultReg = np.uint32(0)           # Where the result of an operation is held until writeback
         self.programCounter = np.uint32(0)      # Next instruction to be fetched
         
         self.loadFromMemory = False             # Whether we need to load from memory
@@ -130,6 +131,9 @@ class ExecuteUnit():
         instruction = self.pipeline[0]
         if instruction.opcode == 0xFF:
             self.finished = True
+
+        if instruction.opcode < 0x10 and instruction.opcode > 0x01:
+            self.reg[instruction.registers[0]] = self.resultReg
         return
 
     def noop(*args):
@@ -137,9 +141,9 @@ class ExecuteUnit():
 
     def arith(self, instr, op=None):
         if instr.immediate != None:
-            self.reg[instr.registers[0]] = op(self.reg[instr.registers[1]], instr.immediate)
+            self.resultReg = op(self.reg[instr.registers[1]], instr.immediate)
         else:
-            self.reg[instr.registers[0]] = op(self.reg[instr.registers[1]], self.reg[instr.registers[2]])
+            self.resultReg = op(self.reg[instr.registers[1]], self.reg[instr.registers[2]])
         return
     
     def LD(self, instr):
