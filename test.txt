@@ -1,9 +1,12 @@
-MEM     0 0xDEAD
-MEM     1 0xDEADBEEF
+MEM     0 0
+MEM     1 0
+MEM     2 0xDEAD
+MEM     3 0xDEADBEEF
 
-LDI     R0 0
+LDI     R0 2
 MVI     R1 0xBEEF
-MVI     R2 1
+MVI     R2 3
+NOP
 LD      R2 R2
 LSI     R0 R0 1     "MyLabel"
 ADD     R3 R0 R1

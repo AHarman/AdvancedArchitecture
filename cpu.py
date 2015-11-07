@@ -6,8 +6,8 @@ from executeUnit import ExecuteUnit
 def memToString():
     global memory
     string = "Memory:\n"
-    for i in range(10):
-        string += str(i) + ": " + format(int(memory[i]), "#02x") + "\n"
+    for i in range(5):
+        string += str(i) + ": " + format(int(memory[i]), "#010x") + "\n"
     return string
 
 
@@ -28,12 +28,18 @@ def loadProgram(filename):
 def executeProgram():
     logString = ""
     unit1 = ExecuteUnit()
-    while unit1.finished == False:
-        unit1.run() 
-        logString += memToString() + "\n\n" + unit1.regToString() + "\n\n**********\n\n" 
+    unit1Finished = False
+    cycleCount = 0
+    while not unit1Finished and cycleCount < 200:
+        unit1Finished = unit1.run() 
+        logString += unit1.pipelineToString() + "\n\n"
+        logString += unit1.specRegToString() + "\n\n"
+        logString += memToString() + "\n\n" + unit1.regToString() + "\n**********\n\n"
+        cycleCount += 1 
 
+    print str(cycleCount) + " cycles"
     with open("log.out", 'w') as f:
-        f.write(unit1.logString)
+        f.write(logString)
     return
 
 def main():
@@ -41,7 +47,7 @@ def main():
     executeProgram()
 
     print "Number stored in memory address 255: "
-    print hex(memory[255])
+    print format(int(memory[255]), "#010x")
     return
 
 if __name__ == "__main__":

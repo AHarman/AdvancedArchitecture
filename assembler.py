@@ -136,8 +136,8 @@ def assemble(assembly):
     for i in range(len(assembly)):
         instruction = assembly[i]
         opcode = instructionSet[instruction[0]]
-        print "Current instruction: "
-        print instruction
+        #print "Current instruction: "
+        #print instruction
         
         if opcode == 0x00:
             machineCode.append(format(0, "032b"))
@@ -147,10 +147,8 @@ def assemble(assembly):
             machineCode.append(assembleArithmetic(instruction))
         elif opcode < 0x40:
             machineCode.append(assembleMemory(instruction))
-            print machineCode[-1]
         else:
             machineCode.append(assembleFlowControl(instruction))
-            print machineCode[-1]
          
     finalString = ""
     for i in range(len(memory)):

@@ -9,10 +9,6 @@ class Instruction():
         self.registers = []
         self.immediate = None
 
-    # TODO: Input/outputs?
-    def decode(self):
-        self.parse()
-
     def parse(self):
         instructionString = format(int(self.instruction), "032b")
 
@@ -37,7 +33,8 @@ class Instruction():
     def __str__(self):
         string = instructionText[self.opcode] + " "
         for i in self.registers:
-            string += hex(i) + " "
-        if self.immediate:
+            string += "R" + str(i) + " "
+        if self.immediate != None:
             string += hex(self.immediate)
         return string
+
