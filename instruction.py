@@ -5,7 +5,7 @@ class Instruction():
 
     def __init__(self, instruction=None):
         self.instruction = instruction
-        self.opcode = None
+        self.opcode = np.uint8(int(format(int(self.instruction), "032b")[:8], 2))
         self.registers = []
         self.immediate = None
 
@@ -15,7 +15,6 @@ class Instruction():
 
     def parse(self):
         instructionString = format(int(self.instruction), "032b")
-        self.opcode = np.uint8(int(instructionString[:8], 2))
 
         if self.opcode == 0x00 or self.opcode == 0xFF:
             return

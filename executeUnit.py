@@ -1,15 +1,19 @@
 from functools import partial
 from operator import *
+from collections import deque
 from state import *
 from instruction import Instruction
 
 class ExecuteUnit():
     def __init__(self):
         self.reg = np.zeros(16, dtype=np.uint32)
+        self.loadReg = np.int32(0)
+        self.storeReg = np.int32(0)
         self.programCounter = np.uint32(0)
-        self.pipeline = []      # TODO: This is a list of Instruction objects used as a queue
+        self.pipeline = deque([Instruction(np.int32(0))]*5, 5)
         self.finished = False
         self.logString = ""
+        print instructions
         
         self.lookup = { 0x00 : self.noop,
                         0x02 : partial(self.arith, op=add),    0x03 : partial(self.arith, op=add),
@@ -41,18 +45,43 @@ class ExecuteUnit():
             string += str(i) + ": " + format(int(self.reg[i]), "#02x") + "\n"
         return string
 
+    def pipelineToString(self):
+        string = ""
+        for instruction in self.pipeline:
+            string += str(instruction) + "\n"
+        return string
+
     def run(self):
-        instruction = self.fetch()
-        instruction.decode()
-        self.execute(instruction)
+        print self.pipelineToString()
+        self.fetch()
+        self.decode()
+        self.memAccess()
+        self.execute()
+        self.writeBack()
+
+        self.programCounter += 1
+    
+    def progressQueue(self):
+        return
 
     def fetch(self):
-        self.programCounter += 1
-        return Instruction(instructions[self.programCounter - 1])
+        instruction = Instruction(instructions[self.programCounter])
+        self.pipeline.append(instruction)
+        return
 
-    def execute(self, instruction):
-        print "Execute: " + str(instruction)
+    def decode(self):
+        self.pipeline[3].decode()
+        return
+
+    def memAccess(self):
+        return
+
+    def execute(self):
+        instruction = self.pipeline[1]
         self.lookup[instruction.opcode](instruction)
+        return
+
+    def writeBack(self):
         return
 
     def noop(*args):
