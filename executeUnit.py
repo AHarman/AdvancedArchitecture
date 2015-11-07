@@ -129,7 +129,7 @@ class ExecuteUnit():
     def writeBack(self):
         instruction = self.pipeline[0]
         if instruction.opcode == 0xFF:
-            finished = True
+            self.finished = True
         return
 
     def noop(*args):
