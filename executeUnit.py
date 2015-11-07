@@ -73,11 +73,6 @@ class ExecuteUnit():
         string += "WRITE BACK: "
         string += str(self.pipeline[0]) + "\n"
 
-        if self.pipeline[1].opcode == 0x23:
-            print "HERE FFS:"
-            print str(self.pipeline[1])
-            print self.pipeline[1].registers[0]
-            print "Y?"
         return string
 
     def run(self):
@@ -111,15 +106,11 @@ class ExecuteUnit():
             self.loadAddressReg = self.reg[instruction.registers[1]] + instruction.immediate
         else:
             self.loadFromMemory = False
-        print "load add reg " + str(self.loadAddressReg)
         return
 
     def memAccess(self):
         if self.loadFromMemory:
             self.loadReg = memory[self.loadAddressReg]
-            print
-            print "LOADED " + format(int(self.loadReg), "06x") + " from " + format(int(self.loadAddressReg), "06x")
-            print
         return
 
     def execute(self):
@@ -163,9 +154,6 @@ class ExecuteUnit():
             memory[instr.immediate] = self.reg[instr.registers[0]]
         else:
             memory[self.reg[instr.registers[1]]] = self.reg[instr.registers[0]]
-            print
-            print "STORED " + format(int(self.storeReg), "06x") + " into " + format(int(self.storeAddressReg), "06x")
-            print
         return
     
     def STA(self, instr):
@@ -186,9 +174,6 @@ class ExecuteUnit():
     
     # TODO: Expand, if op=None do BR
     def branchComp(self, instr, op=None):
-        print "Branch check: "
-        print format(int(self.reg[instr.registers[0]]), "06x")
-        print format(int(self.reg[instr.registers[1]]), "06x")
         if op(self.reg[instr.registers[0]], self.reg[instr.registers[1]]):
             if instr.immediate != None:
                 address = np.uint32(instr.immediate)
