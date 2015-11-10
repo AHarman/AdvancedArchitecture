@@ -8,17 +8,12 @@ MVI     R1 0xBEEF
 MVI     R2 3
 NOP
 NOP
-NOP
 LD      R2 R2
 LSI     R0 R0 1     "MyLabel"
 NOP
 ADD     R3 R0 R1
 
 BRNI    R2 R3 >MyLabel
-NOP
-NOP
-NOP
-NOP
 STI     R2 255
 
 TERMINATE

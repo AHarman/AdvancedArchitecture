@@ -31,9 +31,9 @@ class Instruction():
             self.immediate = np.int32(int(instructionString[numRegs*4 + 8:], 2))
 
     def __str__(self):
-        string = instructionText[self.opcode] + " "
+        string = instructionText[self.opcode].ljust(4) + " "
         for i in self.registers:
-            string += "R" + str(i) + " "
+            string += ("R" + str(i)).ljust(4)
         if self.immediate != None:
             string += hex(self.immediate)
         return string

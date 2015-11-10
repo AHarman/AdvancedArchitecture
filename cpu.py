@@ -7,7 +7,7 @@ def memToString():
     global memory
     string = "Memory:\n"
     for i in range(5):
-        string += str(i) + ": " + format(int(memory[i]), "#010x") + "\n"
+        string += str(i).rjust(3) + ": " + format(int(memory[i]), "#010x") + "\n"
     return string
 
 

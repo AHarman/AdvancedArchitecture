@@ -9,9 +9,9 @@ class ExecuteUnit():
         self.reg = np.zeros(16, dtype=np.uint32)
         
         # Special regs
-        self.loadReg = np.uint32(0)             # When something comes in from memory, it goes here
+        self.loadDataReg = np.uint32(0)             # When something comes in from memory, it goes here
         self.loadAddressReg = np.uint32(0)      # What address in memory we're fetching from
-        self.storeReg = np.uint32(0)            # What to store in memory
+        self.storeDataReg = np.uint32(0)            # What to store in memory
         self.storeAddressReg = np.uint32(0)     # Where to store it in memory
         self.resultReg = np.uint32(0)           # Where the result of an operation is held until writeback
         self.programCounter = np.uint32(0)      # Next instruction to be fetched
@@ -49,7 +49,8 @@ class ExecuteUnit():
     def regToString(self):
         string = "Registers:\n"
         for i in range(len(self.reg[:5])):
-            string += str(i) + ": " + format(int(self.reg[i]), "#010x") + "\n"
+            string += ("R" + str(i) + ":").ljust(5)
+            string += format(int(self.reg[i]), "#010x") + "\n"
         return string
     
     def specRegToString(self):
@@ -57,9 +58,9 @@ class ExecuteUnit():
         string += "Program Counter: " + format(int(self.programCounter),  "#010x") + "\n"
         string += "Result:          " + format(int(self.resultReg),       "#010x") + "\n"
         string += "Load Address:    " + format(int(self.loadAddressReg),  "#010x") + "\n"
-        string += "Load Data:       " + format(int(self.loadReg),         "#010x") + "\n"
+        string += "Load Data:       " + format(int(self.loadDataReg),         "#010x") + "\n"
         string += "Store Address:   " + format(int(self.storeAddressReg), "#010x") + "\n"
-        string += "Store Data:      " + format(int(self.storeReg),        "#010x") + "\n"
+        string += "Store Data:      " + format(int(self.storeDataReg),        "#010x") + "\n"
         return string
 
     def pipelineToString(self):
@@ -119,9 +120,9 @@ class ExecuteUnit():
     def memAccess(self):
         instruction = self.pipeline[2]
         if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
-            self.loadReg = memory[self.loadAddressReg]
+            self.loadDataReg = memory[self.loadAddressReg]
         if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
-            self.storeReg = self.reg[instruction.registers[0]]
+            self.storeDataReg = self.reg[instruction.registers[0]]
         return
 
     def execute(self):
@@ -151,14 +152,11 @@ class ExecuteUnit():
         return
     
     def LD(self, instr):
-        self.resultReg = self.loadReg
+        self.resultReg = self.loadDataReg
         return
     
     def ST(self, instr):
-        print "ST TIME!"
-        print "Store reg:     " + format(int(self.storeReg), "#10x")
-        print "Store add reg: " + format(int(self.storeAddressReg), "#10x")
-        memory[self.storeAddressReg] = self.storeReg
+        memory[self.storeAddressReg] = self.storeDataReg
 
     def MV(self, instr):
         if instr.immediate != None:
