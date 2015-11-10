@@ -31,11 +31,11 @@ def executeProgram():
     unit1Finished = False
     cycleCount = 0
     while not unit1Finished and cycleCount < 200:
-        unit1Finished = unit1.run() 
         logString += unit1.pipelineToString() + "\n\n"
         logString += unit1.specRegToString() + "\n\n"
-        logString += memToString() + "\n\n" + unit1.regToString() + "\n**********\n\n"
+        logString += memToString() + "\n\n" + unit1.regToString() + "\n**********\n"
         cycleCount += 1 
+        unit1Finished = unit1.run() 
 
     print str(cycleCount) + " cycles"
     with open("log.out", 'w') as f:

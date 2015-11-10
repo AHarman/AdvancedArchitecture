@@ -22,7 +22,7 @@ class ExecuteUnit():
         self.finished = False
         self.logString = ""
         
-        self.lookup = { 0x00 : self.noop,
+        self.lookup = { 0x00 : self.NOP,
                         0x02 : partial(self.arith, op=add),    0x03 : partial(self.arith, op=add),
                         0x04 : partial(self.arith, op=sub),    0x05 : partial(self.arith, op=sub),
                         0x06 : partial(self.arith, op=mul),    0x07 : partial(self.arith, op=mul),
@@ -34,8 +34,8 @@ class ExecuteUnit():
                         0x22 : self.LD,  0x23 : self.LD,
                         0x24 : self.LD,  0x25 : self.LD,
                         0x26 : self.MV,  0x27 : self.MV,
-                        0x28 : self.ST,  0x29 : self.ST,
-                        0x2A : self.STA, 0x2A : self.STA,
+                        0x28 : self.ST, 0x29 : self.ST,
+                        0x2A : self.ST, 0x2A : self.ST,
     
                         0x42 : self.BR,                         0x43 : self.BR,
                         0x44 : partial(self.branchComp, op=eq), 0x45 : partial(self.branchComp, op=eq),
@@ -55,6 +55,7 @@ class ExecuteUnit():
     def specRegToString(self):
         string =  "Special Registers:\n"
         string += "Program Counter: " + format(int(self.programCounter),  "#010x") + "\n"
+        string += "Result:          " + format(int(self.resultReg),       "#010x") + "\n"
         string += "Load Address:    " + format(int(self.loadAddressReg),  "#010x") + "\n"
         string += "Load Data:       " + format(int(self.loadReg),         "#010x") + "\n"
         string += "Store Address:   " + format(int(self.storeAddressReg), "#010x") + "\n"
@@ -83,7 +84,7 @@ class ExecuteUnit():
         self.fetch()
 
         self.programCounter += 1
-        print self.pipelineToString()
+        #print self.pipelineToString()
 
         return self.finished
     
@@ -95,7 +96,7 @@ class ExecuteUnit():
     def decode(self):
         instruction = self.pipeline[3]
         instruction.parse()
-        self.loadFromMemory = True
+
         if   instruction.opcode == 0x22:
             self.loadAddressReg = self.reg[instruction.registers[1]]
         elif instruction.opcode == 0x23:
@@ -104,13 +105,23 @@ class ExecuteUnit():
             self.loadAddressReg = self.reg[instruction.registers[1]] + self.reg[instruction.registers[2]]
         elif instruction.opcode == 0x25:
             self.loadAddressReg = self.reg[instruction.registers[1]] + instruction.immediate
-        else:
-            self.loadFromMemory = False
+
+        if   instruction.opcode == 0x28:
+            self.storeAddressReg = self.reg[instruction.registers[1]]
+        elif instruction.opcode == 0x29:
+            self.storeAddressReg = instruction.immediate
+        elif instruction.opcode == 0x2A:
+            self.storeAddressReg = self.reg[instruction.registers[1]] + self.reg[instruction.registers[2]]
+        elif instruction.opcode == 0x2B:
+            self.storeAddressReg = self.reg[instruction.registers[1]] + instruction.immediate
         return
 
     def memAccess(self):
-        if self.loadFromMemory:
+        instruction = self.pipeline[2]
+        if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
             self.loadReg = memory[self.loadAddressReg]
+        if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
+            self.storeReg = self.reg[instruction.registers[0]]
         return
 
     def execute(self):
@@ -120,14 +131,16 @@ class ExecuteUnit():
 
     def writeBack(self):
         instruction = self.pipeline[0]
+        # Needed to end execution.
         if instruction.opcode == 0xFF:
             self.finished = True
 
-        if instruction.opcode < 0x10 and instruction.opcode > 0x01:
+        # All arithmetic, Loads, and Move operations.
+        if instruction.opcode < 0x28 and instruction.opcode > 0x01: 
             self.reg[instruction.registers[0]] = self.resultReg
         return
 
-    def noop(*args):
+    def NOP(*args):
         return
 
     def arith(self, instr, op=None):
@@ -138,32 +151,22 @@ class ExecuteUnit():
         return
     
     def LD(self, instr):
-        self.reg[instr.registers[0]] = self.loadReg
+        self.resultReg = self.loadReg
         return
+    
+    def ST(self, instr):
+        print "ST TIME!"
+        print "Store reg:     " + format(int(self.storeReg), "#10x")
+        print "Store add reg: " + format(int(self.storeAddressReg), "#10x")
+        memory[self.storeAddressReg] = self.storeReg
 
     def MV(self, instr):
         if instr.immediate != None:
-            self.reg[instr.registers[0]] = instr.immediate
+            self.resultReg = instr.immediate
         else:
-            self.reg[instr.registers[0]] = self.reg[instr.registers[1]]
+            self.resultReg = self.reg[instr.registers[1]]
         return
 
-    def ST(self, instr):
-        global memory
-        if instr.immediate != None:
-            memory[instr.immediate] = self.reg[instr.registers[0]]
-        else:
-            memory[self.reg[instr.registers[1]]] = self.reg[instr.registers[0]]
-        return
-    
-    def STA(self, instr):
-        global memory
-        if instr.immediate != None:
-            memory[self.reg[instr.registers[1]] + instr.immediate] = self.reg[instr.registers[0]]
-        else:
-            memory[self.reg[instr.registers[1]] + self.reg[instr.registers[2]]] = self.reg[instr.registers[0]]
-        return
-    
     # TODO: Clear pipeline
     def branch(self, address):
         self.programCounter = address
