@@ -2,6 +2,7 @@ import numpy as np
 from collections import deque
 from functools   import partial
 from operator    import *
+from copy        import copy
 
 from instruction import Instruction
 from state       import State
@@ -11,29 +12,34 @@ from branchUnit  import BranchUnit
 class Processor():
     def __init__(self, state):     
         self.state  = state
+        #self.executeUnits = [ExecuteUnit(state)] * state.numExecutionUnits
         self.executeUnit = ExecuteUnit(state)
         self.branchUnit  = BranchUnit(state)
         return
 
     def run(self):
-        self.writeBack()
-        self.execute()
-        self.memAccess()
-        self.decode()
+        #self.writeBack()
+        #self.execute()
+        #self.memAccess()
+        #self.decode()
         self.fetch()
 
         self.state.programCounter += 1
         return
 
     def fetch(self):
-        instruction = Instruction(self.state.instructions[self.state.programCounter])
-        self.state.pipeline.append(instruction)
+        for i in range(self.state.numExecuteUnits):
+            instruction = Instruction(self.state.instructions[self.state.programCounter + i])
+            instruction.parse()
+            self.state.instrBuffer[i] = instruction
 
+        self.state.pipeline.append(copy(self.state.instrBuffer))
         return
 
     def decode(self):
-        instruction = self.state.pipeline[3]
-        instruction.parse()
+        instructions = self.state.pipeline[3]
+
+        self.buildDependencies()
 
         if   instruction.opcode == 0x22:
             self.state.loadAddressReg = self.state.reg[instruction.registers[1]]
@@ -55,7 +61,7 @@ class Processor():
         return
 
     def memAccess(self):
-        instruction = self.state.pipeline[2]
+        instruction = self.state.pipeline[2][0]
         if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
             self.state.loadDataReg = self.state.memory[self.state.loadAddressReg]
         if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
@@ -63,7 +69,7 @@ class Processor():
         return
 
     def execute(self):
-        instruction = self.state.pipeline[1]
+        instruction = self.state.pipeline[1][0]
         if instruction.opcode < 0x40 or instruction.opcode == 0xFF:
             self.executeUnit.execute(instruction)
         else:
@@ -72,7 +78,7 @@ class Processor():
         
 
     def writeBack(self):
-        instruction = self.state.pipeline[0]
+        instruction = self.state.pipeline[0][0]
         # Needed to end execution.
         if instruction.opcode == 0xFF:
             self.state.finished = True
@@ -81,4 +87,6 @@ class Processor():
         if instruction.opcode < 0x28 and instruction.opcode > 0x01: 
             self.state.reg[instruction.registers[0]] = self.state.resultReg
         return
+
+        
 
