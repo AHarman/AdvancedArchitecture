@@ -62,8 +62,23 @@ def segregateMemory(assembly):
 
     return (data, instructions)
 
+def removeComments(assembly):
+    newAssembly = []
+    for line in assembly:
+        commentFound = False
+        newLine = []
+        for word in line:
+            if word[0:2] == "//":
+                commentFound = True
+            if commentFound == False:
+                newLine.append(word)
+        if newLine:
+            newAssembly.append(newLine)
+    return newAssembly
+    
 
 def preprocessor(assembly):
+    assembly = removeComments(assembly)
     (memory, assembly) = segregateMemory(assembly)
     labels = findLabels(assembly)
     assembly = replaceLabels(assembly, labels)
@@ -90,15 +105,15 @@ def assembleMemory(instruction):
     instruction.pop(0)
     if opcode | 1 == 0x25 or opcode | 1 == 0x2B:    # LDA, LDAI, STA, STAI
         machineCode += format(int(instruction[0][1:]), "04b")
-        if opcode % 2 == 0:
+        if opcode % 2 == 0:                         # LDA, STA
             machineCode += format(int(instruction[1][1:]), "04b")
             machineCode += format(0, "012b")
-        else:
-            machineCode += format(int(instruction[1][1:]), "016b")
-    elif opcode % 2 == 0:
+        else:                                       # LDAI, STAI
+            machineCode += format(int(instruction[1]), "016b")
+    elif opcode % 2 == 0:                           # MV
         machineCode += format(int(instruction[0][1:]), "04b")
         machineCode += format(0, "016b")
-    else:
+    else:                                           # MVI
         machineCode += format(int(instruction[0], 0), "020b")
     return machineCode
 
@@ -117,13 +132,13 @@ def assembleFlowControl(instruction):
     elif opcode == 0x4D:    # BRZI
         machineCode += format(int(instruction[1][1:]), "04b")
         machineCode += format(int(instruction[2], 0), "020b")
-    else:
+    else:                   # BRE, BREI, BRN, BRNI, BRL, BRLI, BRG, BRGI
         machineCode += format(int(instruction[1][1:]), "04b")
         machineCode += format(int(instruction[2][1:]), "04b")
-        if opcode % 2 == 0:
+        if opcode % 2 == 0: # BRE, BRN, BRL, BRG
             machineCode += format(int(instruction[3][1:]), "04b")
             machineCode += format(0, "012b")
-        else:
+        else:               # BREI, BRNI, BRLI. BRGI
             machineCode += format(int(instruction[3], 0), "016b")
 
     return machineCode    
