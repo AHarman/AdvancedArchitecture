@@ -4,7 +4,7 @@ from collections import deque
 from state import *
 from instruction import Instruction
 
-class ExecuteUnit():
+class Processor():
     def __init__(self):
         self.reg = np.zeros(16, dtype=np.uint32)
         

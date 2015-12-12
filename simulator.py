@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from state import *
-from executeUnit import ExecuteUnit
+from processor import Processor
 
 def memToString():
     global memory
@@ -27,15 +27,15 @@ def loadProgram(filename):
 
 def executeProgram():
     logString = ""
-    unit1 = ExecuteUnit()
-    unit1Finished = False
+    proc = Processor()
+    procFinished = False
     cycleCount = 0
-    while not unit1Finished and cycleCount < 200:
-        logString += unit1.pipelineToString() + "\n\n"
-        logString += unit1.specRegToString() + "\n\n"
-        logString += memToString() + "\n\n" + unit1.regToString() + "\n**********\n"
+    while not procFinished and cycleCount < 200:
+        logString += proc.pipelineToString() + "\n\n"
+        logString += proc.specRegToString() + "\n\n"
+        logString += memToString() + "\n\n" + proc.regToString() + "\n**********\n"
         cycleCount += 1 
-        unit1Finished = unit1.run() 
+        unit1Finished = proc.run() 
 
     print str(cycleCount) + " cycles"
     with open("log.out", 'w') as f:
