@@ -21,6 +21,7 @@ class State():
 
         self.pipeline = deque([Instruction(np.uint32(0))]*5, 5)
         self.finished = False
+        return
 
     def regToString(self, numRegs=5):
         string = "Registers:\n"
@@ -56,7 +57,6 @@ class State():
         string += str(self.pipeline[1]) + "\n"
         string += "WRITE BACK: "
         string += str(self.pipeline[0]) + "\n"
-
         return string
 
     def loadProgram(self, filename):
@@ -71,4 +71,4 @@ class State():
             self.memory[i] = np.uint32(int(memoryIn[i], 2))
         for i in range(len(instructionsIn)):
             self.instructions[i] = np.uint32(int(instructionsIn[i], 2))
-        print self.instructions
+        return
