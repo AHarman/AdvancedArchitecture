@@ -23,15 +23,11 @@ class Processor():
         self.fetch()
 
         self.state.programCounter += 1
-        #print self.pipelineToString()
         return
 
     def fetch(self):
         instruction = Instruction(self.state.instructions[self.state.programCounter])
-        try:
-            self.state.pipeline.append(instruction)
-        except e:
-            print self.state.pipeline
+        self.state.pipeline.append(instruction)
 
         return
 
