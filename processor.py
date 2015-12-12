@@ -1,17 +1,21 @@
 from functools import partial
 from operator import *
 from collections import deque
-from state import *
 from instruction import Instruction
+from state import State
+import numpy as np
 
 class Processor():
-    def __init__(self):
-        self.reg = np.zeros(16, dtype=np.uint32)
-        
-        # Special regs
-        self.loadDataReg = np.uint32(0)             # When something comes in from memory, it goes here
+    
+    def __init__(self, state):     
+        self.reg = state.registers
+        self.memory = state.memory
+        self.instructions = state.instructions
+
+        # Special regs 
+        self.loadDataReg = np.uint32(0)         # When something comes in from memory, it goes here
         self.loadAddressReg = np.uint32(0)      # What address in memory we're fetching from
-        self.storeDataReg = np.uint32(0)            # What to store in memory
+        self.storeDataReg = np.uint32(0)        # What to store in memory
         self.storeAddressReg = np.uint32(0)     # Where to store it in memory
         self.resultReg = np.uint32(0)           # Where the result of an operation is held until writeback
         self.programCounter = np.uint32(0)      # Next instruction to be fetched
@@ -46,12 +50,6 @@ class Processor():
     
                         0xFF : self.terminate}
     
-    def regToString(self):
-        string = "Registers:\n"
-        for i in range(len(self.reg[:5])):
-            string += ("R" + str(i) + ":").ljust(5)
-            string += format(int(self.reg[i]), "#010x") + "\n"
-        return string
     
     def specRegToString(self):
         string =  "Special Registers:\n"
@@ -90,7 +88,7 @@ class Processor():
         return self.finished
     
     def fetch(self):
-        instruction = Instruction(instructions[self.programCounter])
+        instruction = Instruction(self.instructions[self.programCounter])
         self.pipeline.append(instruction)
         return
 
@@ -120,7 +118,7 @@ class Processor():
     def memAccess(self):
         instruction = self.pipeline[2]
         if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
-            self.loadDataReg = memory[self.loadAddressReg]
+            self.loadDataReg = self.memory[self.loadAddressReg]
         if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
             self.storeDataReg = self.reg[instruction.registers[0]]
         return
@@ -156,7 +154,7 @@ class Processor():
         return
     
     def ST(self, instr):
-        memory[self.storeAddressReg] = self.storeDataReg
+        self.memory[self.storeAddressReg] = self.storeDataReg
 
     def MV(self, instr):
         if instr.immediate != None:
