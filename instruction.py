@@ -30,27 +30,55 @@ class Instruction():
         self.opcode = np.uint8(int(format(int(self.instruction), "032b")[:8], 2))
         self.registers = []
         self.immediate = None
+        self.numRegs = None
+        self.finished = False       # Has instruction finished executing
+        self.waitingFor = []        # Any instructions that must be completed before this one is
 
     def parse(self):
         instructionString = format(int(self.instruction), "032b")
 
         if self.opcode == 0x00 or self.opcode == 0xFF:
+            self.numRegs = 0
             return
         if self.opcode | 1 == 0x43:
-            numRegs = 1
+            self.numRegs = 1
         elif self.opcode | 1 in [0x23, 0x27, 0x29, 0x4D]:
-            numRegs = 2
+            self.numRegs = 2
         else:
-            numRegs = 3
+            self.numRegs = 3
 
         if self.opcode % 2 == 1:
-            numRegs -= 1
-            self.immediate = np.int32(int(instructionString[8 + 4 * numRegs:], 2))
+            self.numRegs -= 1
+            self.immediate = np.int32(int(instructionString[8 + 4 * self.numRegs:], 2))
 
-        for i in range(numRegs):
+        for i in range(self.numRegs):
             self.registers.append(np.uint8(int(instructionString[i*4 + 8: i*4 + 12], 2)))
         if self.immediate != None:
-            self.immediate = np.int32(int(instructionString[numRegs*4 + 8:], 2))
+            self.immediate = np.int32(int(instructionString[self.numRegs*4 + 8:], 2))
+
+    def getDependencies(self):
+        reads = []
+        writes = []
+        if self.opcode in [0x00, 0xFF, 0x43]:    # NOP, TRM, BRI
+            return [[], []]
+        elif self.opcode < 0x20:            # Arithmetic instructions
+            writes.append("R" + str(self.registers[0]))
+            for i in range(1, self.numRegs):
+                reads.append("R" + str(self.registers[i]))
+        elif self.opcode < 0x28:            # LD*, MV*
+            writes.append("R" + str(self.registers[0]))
+            for i in range(1, self.numRegs):
+                reads.append("R" + str(self.registers[i]))
+        elif self.opcode < 0x40:            # ST*
+            for i in range(self.numRegs):
+                reads.append("R" + str(self.registers[i]))
+        else:                               # Branch
+            for i in range(self.numRegs):
+                reads.append("R" + str(self.registers[i]))
+        return [reads, writes]
+    
+    def updateWaiting(self):
+        self.waitingFor = [x for x in self.waitingFor if not x.finished]
 
     def __str__(self):
         string = instructionText[self.opcode].ljust(4) + " "

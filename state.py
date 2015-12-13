@@ -5,12 +5,13 @@ from instruction import Instruction
 class State():
     def __init__(self):
         self.numExecuteUnits = 2
+        self.instrBufferSize = 5
         
         self.memory       = np.zeros(256, dtype=np.uint32)
         self.instructions = np.zeros(256, dtype=np.uint32)
         self.reg          = np.zeros( 16, dtype=np.uint32)
-        self.instrBuffer  = [Instruction(np.uint32(0))] * self.numExecuteUnits
-        self.pipeline     = deque([[], [], [], [], []], 5)
+        self.instrBuffer  = deque([], self.instrBufferSize)
+        self.pipeline     = deque([[], [], []], 3)  # Only used for Mem access, execute and writeback now.
         for i in range(len(self.pipeline)):
             self.pipeline[i] = [Instruction(np.uint32(0)), Instruction(np.uint32(0))]
 
@@ -29,9 +30,9 @@ class State():
         return
 
     def instrBufferToString(self):
-        string = "Instruction buffer:\n"
-        for instruction in self.instrBuffer: 
-            string += str(instruction) + "\n"
+        string = "INSTR BUF:  " + str(self.instrBuffer[0]) + "\n"
+        for instruction in list(self.instrBuffer)[1:]: 
+            string += "            " + str(instruction) + "\n"
         return string
 
     def regToString(self, numRegs=5):
@@ -58,15 +59,15 @@ class State():
         return string
 
     def pipelineToString(self):
-        string =  "FETCH:      " + str(self.pipeline[4][0]) + "\n"
-        for instruction in self.pipeline[4][1:]:
-            string += "            " + str(instruction) + "\n"
+        #string =  "FETCH:      " + str(self.pipeline[4][0]) + "\n"
+        #for instruction in self.pipeline[4][1:]:
+        #    string += "            " + str(instruction) + "\n"
         
-        string += "DECODE:     " + str(self.pipeline[3][0]) + "\n"
-        for instruction in self.pipeline[3][1:]:
-            string += "            " + str(instruction) + "\n"
+        #string += "DECODE:     " + str(self.pipeline[3][0]) + "\n"
+        #for instruction in self.pipeline[3][1:]:
+        #    string += "            " + str(instruction) + "\n"
         
-        string += "MEM ACCESS: " + str(self.pipeline[2][0]) + "\n"
+        string  = "MEM ACCESS: " + str(self.pipeline[2][0]) + "\n"
         for instruction in self.pipeline[2][1:]:
             string += "            " + str(instruction) + "\n"
         

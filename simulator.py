@@ -11,13 +11,16 @@ def executeProgram(state):
     proc = Processor(state)
     cycleCount = 0
     while not state.finished and cycleCount < 300:
-        thisLogString  = state.pipelineToString() + "\n\n"
-        thisLogString += state.specRegToString()  + "\n\n"
-        thisLogString += state.memToString()      + "\n\n" 
-        thisLogString += state.regToString()      + "\n**********\n"
-        if debug:
-            print thisLogString
-            raw_input("Press to continue")
+        thisLogString = ""
+        if cycleCount > 0:
+            thisLogString += state.instrBufferToString()
+            thisLogString += state.pipelineToString()    + "\n"
+            thisLogString += state.specRegToString()     + "\n"
+            thisLogString += state.memToString()         + "\n" 
+            thisLogString += state.regToString()         + "\n**********\n"
+            if debug:
+                print thisLogString
+                raw_input("Press to continue")
         proc.run()
         logString += thisLogString
         cycleCount += 1 

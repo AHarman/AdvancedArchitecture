@@ -21,7 +21,6 @@ class BranchUnit():
 
     def branch(self, address):
         self.state.programCounter = address
-        self.state.pipeline[4] = Instruction(np.int32(0))
         self.state.pipeline[3] = Instruction(np.int32(0))
         self.state.pipeline[2] = Instruction(np.int32(0))
         return
