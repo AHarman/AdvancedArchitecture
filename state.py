@@ -16,12 +16,12 @@ class State():
             self.pipeline[i] = [Instruction(np.uint32(0)), Instruction(np.uint32(0))]
 
         # Special regs 
-        self.loadDataReg     = np.uint32(0)     # When something comes in from memory, it goes here
-        self.loadAddressReg  = np.uint32(0)     # What address in memory we're fetching from
-        self.storeDataReg    = np.uint32(0)     # What to store in memory
-        self.storeAddressReg = np.uint32(0)     # Where to store it in memory
-        self.resultReg       = np.uint32(0)     # Where the result of an operation is held until writeback
-        self.programCounter  = np.uint32(0)     # Next instruction to be fetched
+        self.loadDataReg     = np.uint32(0)                                     # When something comes in from memory, it goes here
+        self.loadAddressReg  = np.uint32(0)                                     # What address in memory we're fetching from
+        self.storeDataReg    = np.uint32(0)                                     # What to store in memory
+        self.storeAddressReg = np.uint32(0)                                     # Where to store it in memory
+        self.resultRegs      = np.zeros(self.numExecuteUnits, dtype=np.uint32)  # Where the result of an operation is held until writeback
+        self.programCounter  = np.uint32(0)                                     # Next instruction to be fetched
         
         self.loadFromMemory  = False            # Whether we need to load from memory
         self.storeToMemory   = False            # Whether we need to store to memory
@@ -45,7 +45,9 @@ class State():
     def specRegToString(self):
         string =  "Special Registers:\n"
         string += "Program Counter: " + format(int(self.programCounter),  "#010x") + "\n"
-        string += "Result:          " + format(int(self.resultReg),       "#010x") + "\n"
+        string += "Result regs:     " + format(int(self.resultRegs[0]),    "#010x") + "\n"
+        for i in range(1, self.numExecuteUnits):
+            string += "                 " + format(int(self.resultRegs[i]),    "#010x") + "\n"
         string += "Load Address:    " + format(int(self.loadAddressReg),  "#010x") + "\n"
         string += "Load Data:       " + format(int(self.loadDataReg),     "#010x") + "\n"
         string += "Store Address:   " + format(int(self.storeAddressReg), "#010x") + "\n"

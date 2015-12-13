@@ -3,6 +3,7 @@ from instruction import Instruction
 from state       import State
 from functools   import partial
 from operator    import *
+from collections import deque
 
 class BranchUnit():
     def __init__(self, state):
@@ -21,8 +22,8 @@ class BranchUnit():
 
     def branch(self, address):
         self.state.programCounter = address
-        self.state.pipeline[3] = Instruction(np.int32(0))
-        self.state.pipeline[2] = Instruction(np.int32(0))
+        self.state.pipeline[2] = [Instruction(np.uint32(0)), Instruction(np.uint32(0))]
+        self.state.instrBuffer  = deque([], self.state.instrBufferSize)
         return
 
     # TODO: Expand, if op=None do BR

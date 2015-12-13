@@ -5,8 +5,9 @@ from functools   import partial
 from operator    import *
 
 class ExecuteUnit():
-    def __init__(self, state):
+    def __init__(self, state, index):
         self.state = state
+        self.index = index      # Need to know which one we are
 
         self.lookup = { 0x00 : self.NOP,
                         0x02 : partial(self.arith, op=add),    0x03 : partial(self.arith, op=add),
@@ -39,16 +40,16 @@ class ExecuteUnit():
 
     def arith(self, instr, op=None):
         if instr.immediate != None:
-            self.state.resultReg = op(self.state.reg[instr.registers[1]], instr.immediate)
+            self.state.resultRegs[self.index] = op(self.state.reg[instr.registers[1]], instr.immediate)
         else:
-            self.state.resultReg = op(self.state.reg[instr.registers[1]], self.state.reg[instr.registers[2]])
+            self.state.resultRegs[self.index] = op(self.state.reg[instr.registers[1]], self.state.reg[instr.registers[2]])
         return
         
     def NOP(*args):
         return
     
     def LD(self, instr):
-        self.state.resultReg = self.state.loadDataReg
+        self.state.resultRegs[self.index] = self.state.loadDataReg
         return
     
     def ST(self, instr):
@@ -57,7 +58,7 @@ class ExecuteUnit():
 
     def MV(self, instr):
         if instr.immediate != None:
-            self.state.resultReg = instr.immediate
+            self.state.resultRegs[self.index] = instr.immediate
         else:
-            self.state.resultReg = self.state.reg[instr.registers[1]]
+            self.state.resultRegs[self.index] = self.state.reg[instr.registers[1]]
         return

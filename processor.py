@@ -12,7 +12,9 @@ from branchUnit  import BranchUnit
 class Processor():
     def __init__(self, state):     
         self.state  = state
-        self.executeUnits = [ExecuteUnit(state)] * state.numExecuteUnits
+        self.executeUnits = []
+        for i in range(state.numExecuteUnits):
+            self.executeUnits.append(ExecuteUnit(state, i))
         #self.executeUnit = ExecuteUnit(state)
         self.branchUnit  = BranchUnit(state)
         return
@@ -76,17 +78,22 @@ class Processor():
         numToBeIssued = len(toBeIssued)
         for i in range(numToBeIssued, self.state.numExecuteUnits):
             toBeIssued.append(Instruction(np.uint32(0)))
+        print "Gon' append this list to the pipeline " + str(toBeIssued)
         self.state.pipeline.append(toBeIssued)
         
         return numToBeIssued 
 
     # For the time being, only do 1 memory access per cycle.
     def memAccess(self):
-        instruction = self.state.pipeline[2][0]
-        if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
-            self.state.loadDataReg = self.state.memory[self.state.loadAddressReg]
-        if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
-            self.state.storeDataReg = self.state.reg[instruction.registers[0]]
+        print "In memAccess, the pipeline is: "
+        print self.state.pipeline
+        print "And the stage we're interested in is: "
+        print self.state.pipeline[2]
+        for instruction in self.state.pipeline[2]:
+            if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
+                self.state.loadDataReg = self.state.memory[self.state.loadAddressReg]
+            if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
+                self.state.storeDataReg = self.state.reg[instruction.registers[0]]
         return
 
     def execute(self):
@@ -102,14 +109,15 @@ class Processor():
 
     def writeBack(self):
         instructions = self.state.pipeline[0]
-        for instruction in instructions:
+        for i in range(len(instructions)):
+            instruction = instructions[i]
             # Needed to end execution.
             if instruction.opcode == 0xFF:
                 self.state.finished = True
 
             # All arithmetic, Loads, and Move operations.
             if instruction.opcode < 0x28 and instruction.opcode > 0x01: 
-                self.state.reg[instruction.registers[0]] = self.state.resultReg
+                self.state.reg[instruction.registers[0]] = self.state.resultRegs[i]
 
             instruction.finished = True;
         return
