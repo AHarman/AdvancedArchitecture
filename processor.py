@@ -123,22 +123,22 @@ class Processor():
         return
 
     def setMemRegs(self, instruction):
-        if   instruction.opcode == 0x22:
+        if   instruction.opcode == 0x22:    # LD
             self.state.loadAddressReg = self.state.reg[instruction.registers[1]]
-        elif instruction.opcode == 0x23:
+        elif instruction.opcode == 0x23:    # LDI
             self.state.loadAddressReg = instruction.immediate
-        elif instruction.opcode == 0x24:
+        elif instruction.opcode == 0x24:    # LDA
             self.state.loadAddressReg = self.state.reg[instruction.registers[1]] + self.state.reg[instruction.registers[2]]
-        elif instruction.opcode == 0x25:
+        elif instruction.opcode == 0x25:    # LDAI
             self.state.loadAddressReg = self.state.reg[instruction.registers[1]] + instruction.immediate
 
-        elif instruction.opcode == 0x28:
+        elif instruction.opcode == 0x28:    # ST
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]]
-        elif instruction.opcode == 0x29:
+        elif instruction.opcode == 0x29:    # STI
             self.state.storeAddressReg = instruction.immediate
-        elif instruction.opcode == 0x2A:
+        elif instruction.opcode == 0x2A:    # STA
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + self.state.reg[instruction.registers[2]]
-        elif instruction.opcode == 0x2B:
+        elif instruction.opcode == 0x2B:    # STAI
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + instruction.immediate
         return
 
