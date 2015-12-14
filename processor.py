@@ -23,10 +23,11 @@ class Processor():
         self.writeBack()
         self.execute()
         self.memAccess()
-        self.decode()
+        instructionsIssued = self.decode()
         self.fetch()
 
-        return
+        self.state.programCounter += 1
+        return instructionsIssued
 
     def fetch(self):
         instrToFetch = self.state.instrBufferSize - len(self.state.instrBuffer)
@@ -138,7 +139,10 @@ class Processor():
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + self.state.reg[instruction.registers[2]]
         elif instruction.opcode == 0x2B:    # STAI
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + instruction.immediate
-        return
+        
+        if instruction.opcode == 0x00:
+            return 0
+        return 1
 
     # TODO: Some work is repeated every cycle here that doesn't need to be.
     def buildDependencies(self):
