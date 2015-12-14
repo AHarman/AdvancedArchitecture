@@ -19,11 +19,11 @@ class Processor():
         self.writeBack()
         self.execute()
         self.memAccess()
-        self.decode()
+        instructionsIssued = self.decode()
         self.fetch()
 
         self.state.programCounter += 1
-        return
+        return instructionsIssued
 
     def fetch(self):
         instruction = Instruction(self.state.instructions[self.state.programCounter])
@@ -52,7 +52,10 @@ class Processor():
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + self.state.reg[instruction.registers[2]]
         elif instruction.opcode == 0x2B:
             self.state.storeAddressReg = self.state.reg[instruction.registers[1]] + instruction.immediate
-        return
+        
+        if instruction.opcode == 0x00:
+            return 0
+        return 1
 
     def memAccess(self):
         instruction = self.state.pipeline[2]

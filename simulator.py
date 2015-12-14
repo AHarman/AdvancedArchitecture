@@ -10,6 +10,7 @@ def executeProgram(state, debug):
     logString = ""
     proc = Processor(state)
     cycleCount = 0
+    instructionCount = 0
     while not state.finished and cycleCount < 300:
         thisLogString  = state.pipelineToString() + "\n\n"
         thisLogString += state.specRegToString()  + "\n\n"
@@ -18,11 +19,13 @@ def executeProgram(state, debug):
         if debug:
             print thisLogString
             raw_input("Press to continue")
-        proc.run()
+        instructionCount += proc.run()
         logString += thisLogString
         cycleCount += 1 
  
     print str(cycleCount) + " cycles run, with a limit of 300"
+    print str(instructionCount) + " instructions executed (not including NOPs)"
+    print str(float(instructionCount)/float(cycleCount)) + " instructions per cycle average"
     logString += "\n\n\n\nFinal Memory: " + state.memToString(15)
     with open("log.out", 'w') as f:
         f.write(logString)
@@ -43,7 +46,6 @@ def getOptions():
 
 def main():
     options = getOptions()
-    print options
     
     state = State(options.numExecuteUnits)
     if options.assemble:
