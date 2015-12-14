@@ -26,7 +26,6 @@ class Processor():
         instructionsIssued = self.decode()
         self.fetch()
 
-        self.state.programCounter += 1
         return instructionsIssued
 
     def fetch(self):

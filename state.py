@@ -5,10 +5,10 @@ from instruction import Instruction
 class State():
     def __init__(self, numExecuteUnits):
         self.numExecuteUnits = numExecuteUnits
-        self.instrBufferSize = min(5,  numExecuteUnits * 5);
+        self.instrBufferSize = max(5,  numExecuteUnits * 5);
         
-        self.memory       = np.zeros(256, dtype=np.uint32)
-        self.instructions = np.zeros(256, dtype=np.uint32)
+        self.memory       = np.zeros( 256, dtype=np.uint32)
+        self.instructions = np.zeros(2048, dtype=np.uint32)
         self.reg          = np.zeros( 16, dtype=np.uint32)
         self.instrBuffer  = deque([], self.instrBufferSize)
         self.pipeline     = deque([[], [], []], 3)  # Only used for Mem access, execute and writeback now.

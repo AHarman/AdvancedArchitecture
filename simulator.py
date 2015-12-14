@@ -11,7 +11,8 @@ def executeProgram(state, debug):
     proc = Processor(state)
     cycleCount = 0
     instructionCount = 0
-    while not state.finished and cycleCount < 300:
+    cycleLimit = 100000
+    while not state.finished and cycleCount < cycleLimit:
         thisLogString = ""
         if cycleCount > 0:
             thisLogString += state.instrBufferToString()
@@ -26,7 +27,7 @@ def executeProgram(state, debug):
         logString += thisLogString
         cycleCount += 1 
  
-    print str(cycleCount) + " cycles run, with a limit of 300"
+    print str(cycleCount) + " cycles run, with a limit of " + str(cycleLimit)
     print str(instructionCount) + " instructions executed (not including NOPs)"
     print str(float(instructionCount)/float(cycleCount)) + " instructions per cycle average"
     logString += "\n\n\n\nFinal Memory: " + state.memToString(15)
