@@ -22,7 +22,9 @@ class BranchUnit():
 
     def branch(self, address):
         self.state.programCounter = address
-        self.state.pipeline[2] = [Instruction(np.uint32(0)), Instruction(np.uint32(0))]
+        self.state.pipeline[2] = []
+        for i in range(self.state.numExecuteUnits):
+            self.state.pipeline[2].append(Instruction(np.uint32(0)))
         self.state.instrBuffer  = deque([], self.state.instrBufferSize)
         return
 

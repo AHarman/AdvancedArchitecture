@@ -3,9 +3,9 @@ from collections import deque
 from instruction import Instruction
 
 class State():
-    def __init__(self):
-        self.numExecuteUnits = 2
-        self.instrBufferSize = min(5,  numExexcuteUnits * 5);
+    def __init__(self, numExecuteUnits):
+        self.numExecuteUnits = numExecuteUnits
+        self.instrBufferSize = min(5,  numExecuteUnits * 5);
         
         self.memory       = np.zeros(256, dtype=np.uint32)
         self.instructions = np.zeros(256, dtype=np.uint32)
@@ -13,8 +13,10 @@ class State():
         self.instrBuffer  = deque([], self.instrBufferSize)
         self.pipeline     = deque([[], [], []], 3)  # Only used for Mem access, execute and writeback now.
         for i in range(len(self.pipeline)):
-            self.pipeline[i] = [Instruction(np.uint32(0)), Instruction(np.uint32(0))]
-
+            self.pipeline[i] = []
+            for j in range(numExecuteUnits):
+                self.pipeline[i].append(Instruction(np.uint32(0)))
+        
         # Special regs 
         self.loadDataReg     = np.uint32(0)                                     # When something comes in from memory, it goes here
         self.loadAddressReg  = np.uint32(0)                                     # What address in memory we're fetching from
@@ -82,9 +84,7 @@ class State():
             string += "            " + str(instruction) + "\n"
         return string
 
-    def loadProgram(self, filename):
-        with open(filename) as f:
-            programIn = f.read()
+    def loadProgram(self, programIn):
     
         programIn = programIn.split("---\n")
         memoryIn = [x for x in programIn[0].split("\n") if x != ""]

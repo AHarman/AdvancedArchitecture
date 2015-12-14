@@ -1,12 +1,12 @@
 import sys
 import numpy as np
-from state import State
+from optparse  import OptionParser
+from state     import State
 from processor import Processor
+import assembler
 
-debug = True
 
-def executeProgram(state):
-    global debug
+def executeProgram(state, debug):
     logString = ""
     proc = Processor(state)
     cycleCount = 0
@@ -31,10 +31,33 @@ def executeProgram(state):
         f.write(logString)
     return
 
+def getOptions():
+    parser = OptionParser()
+    parser.add_option("-i", "--input", action="store", type="string", dest="input",
+                        help="use as input file", metavar="FILE")
+    parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False,
+                        help="print state to stdout")
+    parser.add_option("-a", "--assemble", action="store_true", dest="assemble", default=False,
+                        help="assemble program before running")
+    parser.add_option("-e", "--executeUnits", action="store", type="int", dest="numExecuteUnits", default=1,
+                        help="number of execute units used")
+    (options, args) = parser.parse_args()
+    return options
+
 def main():
-    state = State()
-    state.loadProgram(sys.argv[1])
-    executeProgram(state)
+    options = getOptions()
+    
+    state = State(options.numExecuteUnits)
+    if options.assemble:
+        with open(options.input) as f:
+            program = f.read()
+        program = assembler.assemble(program)
+    else:
+        with open(options.input) as f:
+            program = f.read()
+
+    state.loadProgram(program)
+    executeProgram(state, options.debug)
 
     return
 

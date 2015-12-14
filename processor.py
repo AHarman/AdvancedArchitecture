@@ -31,14 +31,14 @@ class Processor():
     def fetch(self):
         instrToFetch = self.state.instrBufferSize - len(self.state.instrBuffer)
         
-        print "InstrBuffer has " + str(len(self.state.instrBuffer)) + " entries"
+        '''print "InstrBuffer has " + str(len(self.state.instrBuffer)) + " entries"
         print "There are " + str(self.state.instrBufferSize) + " total spaces"
-        print "Need to fetch " + str(instrToFetch)
+        print "Need to fetch " + str(instrToFetch)'''
        
         for i in range(instrToFetch):
             instruction = Instruction(self.state.instructions[self.state.programCounter + i])
             instruction.parse()
-            print "Grabbed instruction " + str(instruction)
+            #print "Grabbed instruction " + str(instruction)
             self.state.instrBuffer.append(instruction)
 
         self.state.programCounter += instrToFetch
@@ -60,23 +60,24 @@ class Processor():
                 if instruction.opcode | 1 in [0x23, 0x25, 0x29, 0x2B]:
                     #print "We have our loadStore for this round"
                     noLoadStore = False
-                print "Issuing " + str(instruction)
+                #print "Issuing " + str(instruction)
                 toBeIssued.append(instruction)
                 self.state.instrBuffer.popleft()
                 if instruction.instrType in ["LOAD", "STORE"]:
                     self.setMemRegs(instruction)
             else:
-                print "Not gonna issue this one: " + str(instruction) + " because: "
+                '''print "Not gonna issue this one: " + str(instruction) + " because: "
                 if instruction.waitingFor:
                     print "uncompleted dependencies"
                 if instruction.opcode == 0x00:
                     print "It's a NOP"
                 if (instruction.opcode | 1 in [0x23, 0x25, 0x29, 0x2B]) and noLoadStore:
-                    print "We've already got out load/store for this cycle."
+                    print "We've already got out load/store for this cycle."'''
                 break;
         
 
         numToBeIssued = len(toBeIssued)
+        #print "Gonna issue " + str(numToBeIssued)
         for i in range(numToBeIssued, self.state.numExecuteUnits):
             toBeIssued.append(Instruction(np.uint32(0)))
         self.state.pipeline.append(toBeIssued)
@@ -94,6 +95,7 @@ class Processor():
 
     def execute(self):
         instructions = self.state.pipeline[1]
+
         for i in range(len(instructions)):
             instruction = instructions[i]
             if instruction.opcode < 0x40 or instruction.opcode == 0xFF:
@@ -154,16 +156,16 @@ class Processor():
                     # If 1st instruction is branch, we depend on it
                     if  (firstInstr.instrType == "BRANCH") and (firstInstr.opcode != 0xFF):
                         secondInstr.waitingFor.append(instructions[j])
-                        print str(secondInstr) + " depends on " + str(firstInstr)
+                        #print str(secondInstr) + " depends on " + str(firstInstr)
                     # If 1st instruction is a store and second is a load, we depend on it
                     elif (firstInstr.instrType == "STORE") and (secondInstr.instrType == "LOAD"): #TODO: This condition doesn't seem right.
                         secondInstr.waitingFor.append(instructions[j])
-                        print str(secondInstr) + " depends on " + str(firstInstr)
+                        #print str(secondInstr) + " depends on " + str(firstInstr)
                     # If 1st instruction writes to a reg the 2nd reads, 2nd depends on 1st
                     else:
                         for reg in firstDeps[1]:
                             if reg in secondDeps[0]:
                                 secondInstr.waitingFor.append(instructions[j])
-                                print str(secondInstr) + " depends on " + str(firstInstr)
+                                #print str(secondInstr) + " depends on " + str(firstInstr)
 
 
