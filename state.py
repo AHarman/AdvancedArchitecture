@@ -5,7 +5,7 @@ from instruction import Instruction
 class State():
     def __init__(self):
         self.numExecuteUnits = 2
-        self.instrBufferSize = 5
+        self.instrBufferSize = min(5,  numExexcuteUnits * 5);
         
         self.memory       = np.zeros(256, dtype=np.uint32)
         self.instructions = np.zeros(256, dtype=np.uint32)

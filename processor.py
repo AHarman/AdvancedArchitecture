@@ -63,7 +63,8 @@ class Processor():
                 print "Issuing " + str(instruction)
                 toBeIssued.append(instruction)
                 self.state.instrBuffer.popleft()
-                self.setMemRegs(instruction)
+                if instruction.instrType in ["LOAD", "STORE"]:
+                    self.setMemRegs(instruction)
             else:
                 print "Not gonna issue this one: " + str(instruction) + " because: "
                 if instruction.waitingFor:
@@ -78,17 +79,12 @@ class Processor():
         numToBeIssued = len(toBeIssued)
         for i in range(numToBeIssued, self.state.numExecuteUnits):
             toBeIssued.append(Instruction(np.uint32(0)))
-        print "Gon' append this list to the pipeline " + str(toBeIssued)
         self.state.pipeline.append(toBeIssued)
         
         return numToBeIssued 
 
     # For the time being, only do 1 memory access per cycle.
     def memAccess(self):
-        print "In memAccess, the pipeline is: "
-        print self.state.pipeline
-        print "And the stage we're interested in is: "
-        print self.state.pipeline[2]
         for instruction in self.state.pipeline[2]:
             if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
                 self.state.loadDataReg = self.state.memory[self.state.loadAddressReg]
@@ -155,13 +151,16 @@ class Processor():
                 firstInstr = instructions[j]
                 if firstInstr not in secondInstr.waitingFor:            # This gets redone as we don't say that one instr doesn't depend on another
                     firstDeps = dependencies[j]
-                    if  (firstInstr.opcode >  0x40) and (firstInstr.opcode != 0xFF):
-                        secondInstr.waitingFor.append(instructions[j])  # If 1st instruction is branch, we depend on it
+                    # If 1st instruction is branch, we depend on it
+                    if  (firstInstr.instrType == "BRANCH") and (firstInstr.opcode != 0xFF):
+                        secondInstr.waitingFor.append(instructions[j])
                         print str(secondInstr) + " depends on " + str(firstInstr)
-                    elif (firstInstr.opcode > 0x28) and (firstInstr.opcode < 0x40):
+                    # If 1st instruction is a store and second is a load, we depend on it
+                    elif (firstInstr.instrType == "STORE") and (secondInstr.instrType == "LOAD"): #TODO: This condition doesn't seem right.
+                        secondInstr.waitingFor.append(instructions[j])
                         print str(secondInstr) + " depends on " + str(firstInstr)
-                        secondInstr.waitingFor.append(instructions[j])  # If 1st instruction is a write and second is a read, we depend on it
-                    else:                                               # If 1st instruction writes to a reg the 2nd reads, 2nd depends on 1st
+                    # If 1st instruction writes to a reg the 2nd reads, 2nd depends on 1st
+                    else:
                         for reg in firstDeps[1]:
                             if reg in secondDeps[0]:
                                 secondInstr.waitingFor.append(instructions[j])

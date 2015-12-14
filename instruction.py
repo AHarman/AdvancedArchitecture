@@ -33,16 +33,17 @@ class Instruction():
         self.numRegs = None
         self.finished = False       # Has instruction finished executing
         self.waitingFor = []        # Any instructions that must be completed before this one is
+        self.instrType = None       # Can be LOAD, STORE, ARITH, BRANCH. MV counts as arith
 
     def parse(self):
         instructionString = format(int(self.instruction), "032b")
 
-        if self.opcode == 0x00 or self.opcode == 0xFF:
+        if self.opcode == 0x00 or self.opcode == 0xFF:      # NOP, TRM
             self.numRegs = 0
             return
-        if self.opcode | 1 == 0x43:
+        if self.opcode | 1 == 0x43:                         # BR, BRI
             self.numRegs = 1
-        elif self.opcode | 1 in [0x23, 0x27, 0x29, 0x4D]:
+        elif self.opcode | 1 in [0x23, 0x27, 0x29, 0x4D]:   # LD, LDI, MV, MVI, ST, STI
             self.numRegs = 2
         else:
             self.numRegs = 3
@@ -55,6 +56,15 @@ class Instruction():
             self.registers.append(np.uint8(int(instructionString[i*4 + 8: i*4 + 12], 2)))
         if self.immediate != None:
             self.immediate = np.int32(int(instructionString[self.numRegs*4 + 8:], 2))
+        
+        if self.opcode < 0x20 or self.opcode | 1 == 0x27:
+            self.instrType = "ARITH"
+        elif self.opcode < 0x26:
+            self.instrType = "LOAD"
+        elif self.opcode < 0x40:
+            self.instrType = "STORE"
+        else:
+            self.instrType = "BRANCH"
 
     def getDependencies(self):
         reads = []
