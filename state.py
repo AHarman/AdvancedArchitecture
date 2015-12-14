@@ -3,10 +3,11 @@ from collections import deque
 from instruction import Instruction
 
 class State():
-    def __init__(self):
+    def __init__(self, numExecuteUnits):
         self.memory       = np.zeros(256, dtype=np.uint32)
         self.instructions = np.zeros(256, dtype=np.uint32)
         self.reg          = np.zeros(16, dtype=np.uint32)
+        self.numExecuteUnits = numExecuteUnits
         
         # Special regs 
         self.loadDataReg     = np.uint32(0)         # When something comes in from memory, it goes here
@@ -59,9 +60,7 @@ class State():
         string += str(self.pipeline[0]) + "\n"
         return string
 
-    def loadProgram(self, filename):
-        with open(filename) as f:
-            programIn = f.read()
+    def loadProgram(self, programIn):
     
         programIn = programIn.split("---\n")
         memoryIn = [x for x in programIn[0].split("\n") if x != ""]
