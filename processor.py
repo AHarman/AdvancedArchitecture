@@ -30,7 +30,6 @@ class Processor():
 
     def fetch(self):
         instrToFetch = self.state.instrBufferSize - len(self.state.instrBuffer)
-        
         '''print "InstrBuffer has " + str(len(self.state.instrBuffer)) + " entries"
         print "There are " + str(self.state.instrBufferSize) + " total spaces"
         print "Need to fetch " + str(instrToFetch)'''
@@ -69,19 +68,9 @@ class Processor():
                 #print "Issuing " + str(instruction)
                 toBeIssued.append(instruction)
                 instruction.started = True
-                self.state.instrBuffer.popleft()
+                self.state.instrBuffer.remove(instruction)
                 if instruction.instrType in ["LOAD", "STORE"]:
                     self.setMemRegs(instruction)
-            else:
-                '''print "Not gonna issue this one: " + str(instruction) + " because: "
-                if instruction.waitingFor:
-                    print "uncompleted dependencies"
-                if instruction.opcode == 0x00:
-                    print "It's a NOP"
-                if (instruction.opcode | 1 in [0x23, 0x25, 0x29, 0x2B]) and noLoadStore:
-                    print "We've already got out load/store for this cycle."'''
-                break;
-        
 
         numToBeIssued = len(toBeIssued)
         #print "Gonna issue " + str(numToBeIssued)
