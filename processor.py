@@ -175,4 +175,11 @@ class Processor():
                     elif (firstInstr.instrType == "STORE") and (secondInstr.instrType in ["LOAD", "STORE"]):
                         secondInstr.addWait(firstInstr, 1)              # 1st instr needs to EXE before second EXE
                         #print str(secondInstr) + " depends on " + str(firstInstr)
+                    
+                    # If terminate, we need to depend on EVERYTHING
+                    elif secondInstr.opcode == 0xFF:
+                        if firstInstr.instrType == "BRANCH":
+                            secondInstr.addWait(firstInstr, 3)
+                        else:
+                            secondInstr.addWait(firstInstr, 1)
         return
