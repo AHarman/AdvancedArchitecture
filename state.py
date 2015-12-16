@@ -4,8 +4,8 @@ from instruction import Instruction
 
 class State():
     def __init__(self, numExecuteUnits):
-        self.memory       = np.zeros(256, dtype=np.uint32)
-        self.instructions = np.zeros(256, dtype=np.uint32)
+        self.memory       = np.zeros( 256, dtype=np.uint32)
+        self.instructions = np.zeros(2048, dtype=np.uint32)
         self.reg          = np.zeros(16, dtype=np.uint32)
         self.numExecuteUnits = numExecuteUnits
         
