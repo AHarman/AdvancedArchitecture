@@ -47,21 +47,28 @@ class Processor():
     def decode(self):
         instructions = list(self.state.instrBuffer)
         toBeIssued = []
-        self.buildDependencies()
         noLoadStore = True
 
         for i in range(len(instructions)):
             instruction = instructions[i]
+            instruction.getReadsWrites()
             instruction.updateWaiting()
+        
+        self.buildDependencies()
 
         for i in range(min(self.state.numExecuteUnits, len(instructions))):
             instruction = instructions[i]
-            if (not instruction.waitingFor) and (instruction.opcode != 0x00) and (instruction.opcode | 1 not in [0x23, 0x25, 0x29, 0x2B] or noLoadStore):
+            
+            if (sum(instruction.waitingFor.values()) == 0 and 
+                instruction.opcode != 0x00 and
+                (instruction.opcode | 1 not in [0x23, 0x25, 0x29, 0x2B] or noLoadStore)):
+
                 if instruction.opcode | 1 in [0x23, 0x25, 0x29, 0x2B]:
                     #print "We have our loadStore for this round"
                     noLoadStore = False
                 #print "Issuing " + str(instruction)
                 toBeIssued.append(instruction)
+                instruction.started = True
                 self.state.instrBuffer.popleft()
                 if instruction.instrType in ["LOAD", "STORE"]:
                     self.setMemRegs(instruction)
@@ -87,9 +94,9 @@ class Processor():
     # For the time being, only do 1 memory access per cycle.
     def memAccess(self):
         for instruction in self.state.pipeline[2]:
-            if instruction.opcode >= 0x22 and instruction.opcode <= 0x25:
+            if instruction.instrType == "LOAD":
                 self.state.loadDataReg = self.state.memory[self.state.loadAddressReg]
-            if instruction.opcode >= 0x28 and instruction.opcode <= 0x2B:
+            if instruction.instrType == "STORE":
                 self.state.storeDataReg = self.state.reg[instruction.registers[0]]
         return
 
@@ -114,7 +121,7 @@ class Processor():
                 self.state.finished = True
 
             # All arithmetic, Loads, and Move operations.
-            if instruction.opcode < 0x28 and instruction.opcode > 0x01: 
+            if instruction.instrType == "ARITH" or instruction.instrType == "LOAD":
                 self.state.reg[instruction.registers[0]] = self.state.resultRegs[i]
 
             instruction.finished = True;
@@ -143,32 +150,37 @@ class Processor():
             return 0
         return 1
 
-    # TODO: Some work is repeated every cycle here that doesn't need to be.
+    # TODO: Some work is repeated every cycle here that doesn't need to be because we don't explicitly state "I don't depend on X"
+    # This function is horrible. I *should* really re-write it from scratch
     def buildDependencies(self):
         instructions = self.state.instrBuffer
-        dependencies = []
         for i in range(len(instructions)):
-
             secondInstr = instructions[i]
-            secondDeps = secondInstr.getDependencies()
-            dependencies.append(secondInstr.getDependencies())
+            #print "Considering: " + str(secondInstr)
+            #print "Reads from:  " + str(secondInstr.reads)
+            #print "Writes to:   " + str(secondInstr.writes)
             for j in range(i):
                 firstInstr = instructions[j]
-                if firstInstr not in secondInstr.waitingFor:            # This gets redone as we don't say that one instr doesn't depend on another
-                    firstDeps = dependencies[j]
+                if firstInstr not in secondInstr.waitingFor:
+                    for reg in firstInstr.writes:    #If first instr writes what we read, wait
+                        if reg in secondInstr.reads:
+                            print str(secondInstr) + " depends on " + str(firstInstr)
+                            if   firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["ARITH", "BRANCH"]:
+                                secondInstr.addWait(firstInstr, 2)      # 1st instr needs to WB before 2nd does EXE
+                            elif firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["LOAD", "STORE"]:
+                                secondInstr.addWait(firstInstr, 3)      # 1st instr needs to WB before 2nd does decode
+                    for reg in firstInstr.writes:
+                        if reg in secondInstr.writes:
+                            print str(secondInstr) + " depends on " + str(firstInstr)
+                            secondInstr.addWait(firstInstr, 1)          # 1st instr needs to WB before 2nd does WB
+                    
                     # If 1st instruction is branch, we depend on it
                     if  (firstInstr.instrType == "BRANCH") and (firstInstr.opcode != 0xFF):
-                        secondInstr.waitingFor.append(instructions[j])
-                        #print str(secondInstr) + " depends on " + str(firstInstr)
+                        secondInstr.addWait(firstInstr, 2)              # Branch needs to hit exe before we can do anything
+                        print str(secondInstr) + " depends on " + str(firstInstr)
+
                     # If 1st instruction is a store and second is a load, we depend on it
-                    elif (firstInstr.instrType == "STORE") and (secondInstr.instrType == "LOAD"): #TODO: This condition doesn't seem right.
-                        secondInstr.waitingFor.append(instructions[j])
-                        #print str(secondInstr) + " depends on " + str(firstInstr)
-                    # If 1st instruction writes to a reg the 2nd reads, 2nd depends on 1st
-                    else:
-                        for reg in firstDeps[1]:
-                            if reg in secondDeps[0]:
-                                secondInstr.waitingFor.append(instructions[j])
-                                #print str(secondInstr) + " depends on " + str(firstInstr)
-
-
+                    elif (firstInstr.instrType == "STORE") and (secondInstr.instrType in ["LOAD", "STORE"]):
+                        secondInstr.addWait(firstInstr, 1)              # 1st instr needs to EXE before second EXE
+                        print str(secondInstr) + " depends on " + str(firstInstr)
+        return

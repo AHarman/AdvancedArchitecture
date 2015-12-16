@@ -32,12 +32,16 @@ class Instruction():
         self.immediate = None
         self.numRegs = None
         self.finished = False       # Has instruction finished executing
-        self.waitingFor = []        # Any instructions that must be completed before this one is
+        self.started = False        # Has it been issued
+        self.waitingFor = {}        # Any instructions that this one depends on, maps to how long to wait once that instr has started
         self.instrType = None       # Can be LOAD, STORE, ARITH, BRANCH. MV counts as arith
+        self.reads = []             # What registers it reads from
+        self.writes = []            # What registers it writes to
 
     def parse(self):
-        instructionString = format(int(self.instruction), "032b")
+        self.determineType()
 
+        instructionString = format(int(self.instruction), "032b")
         if self.opcode == 0x00 or self.opcode == 0xFF:      # NOP, TRM
             self.numRegs = 0
             return
@@ -57,6 +61,11 @@ class Instruction():
         if self.immediate != None:
             self.immediate = np.int32(int(instructionString[self.numRegs*4 + 8:], 2))
         
+        return
+
+    def determineType(self):
+        if self.opcode in [0x00, 0xFF]:
+            return
         if self.opcode < 0x20 or self.opcode | 1 == 0x27:
             self.instrType = "ARITH"
         elif self.opcode < 0x26:
@@ -65,8 +74,21 @@ class Instruction():
             self.instrType = "STORE"
         else:
             self.instrType = "BRANCH"
+        return
 
-    def getDependencies(self):
+    def getReadsWrites(self):
+        self.reads = []
+        self.writes = []
+        if self.instrType == "ARITH" or self.instrType == "LOAD":
+            self.writes.append(self.registers[0])
+            for reg in self.registers[1:]:
+                self.reads.append(reg)
+        else:
+            for reg in self.registers:
+                self.reads.append(reg)
+        return
+
+    '''def getDependencies(self):
         reads = []
         writes = []
         if self.opcode in [0x00, 0xFF, 0x43]:    # NOP, TRM, BRI
@@ -85,13 +107,23 @@ class Instruction():
         else:                               # Branch
             for i in range(self.numRegs):
                 reads.append("R" + str(self.registers[i]))
-        return [reads, writes]
+        return [reads, writes]'''
     
     def updateWaiting(self):
-        self.waitingFor = [x for x in self.waitingFor if not x.finished]
+        for instruction in self.waitingFor:
+            if instruction.started:
+                self.waitingFor[instruction] = max(0, self.waitingFor[instruction] - 1)
+        return
+
+    def addWait(self, instruct, waitAmount):
+        if instruct in self.waitingFor:
+            self.waitingFor[instruct] = max(self.waitingFor[instruct], waitAmount)
+        else:
+            self.waitingFor[instruct] = waitAmount
+        return
 
     def __str__(self):
-        string = instructionText[self.opcode].ljust(4) + " "
+        string = str(sum(self.waitingFor.values())) + " " + instructionText[self.opcode].ljust(4) + " "
         for i in self.registers:
             string += ("R" + str(i)).ljust(4)
         if self.immediate != None:
