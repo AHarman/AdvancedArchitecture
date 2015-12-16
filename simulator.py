@@ -15,22 +15,28 @@ def executeProgram(state, debug):
     while not state.finished and cycleCount < cycleLimit:
         thisLogString = ""
         if cycleCount > 0:
-            thisLogString += state.instrBufferToString()
-            thisLogString += state.pipelineToString()    + "\n"
-            thisLogString += state.specRegToString()     + "\n"
-            thisLogString += state.memToString()         + "\n" 
+            #thisLogString += state.instrBufferToString()
+            #thisLogString += state.pipelineToString()    + "\n"
+            #thisLogString += state.specRegToString()     + "\n"
+            #thisLogString += state.memToString()         + "\n" 
             thisLogString += state.regToString()         + "\n**********\n"
             if debug:
                 print thisLogString
                 raw_input("Press to continue")
         instructionCount += proc.run()
         logString += thisLogString
-        cycleCount += 1 
+        cycleCount += 1
+    
  
     print str(cycleCount) + " cycles run, with a limit of " + str(cycleLimit)
     print str(instructionCount) + " instructions executed (not including NOPs)"
     print str(float(instructionCount)/float(cycleCount)) + " instructions per cycle average"
-    logString += "\n\n\n\nFinal Memory: " + state.memToString(15)
+    
+    logString += "\n\n\n\nFinal State:\n"
+    logString += state.memToString(15)   + "\n"
+    logString += state.specRegToString() + "\n"
+    logString += state.regToString(16)
+    
     with open("log.out", 'w') as f:
         f.write(logString)
     return
