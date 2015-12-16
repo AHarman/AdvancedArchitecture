@@ -55,9 +55,8 @@ class Processor():
         
         self.buildDependencies()
 
-        for i in range(min(self.state.numExecuteUnits, len(instructions))):
+        for i in range(len(instructions)):
             instruction = instructions[i]
-            
             if (sum(instruction.waitingFor.values()) == 0 and 
                 instruction.opcode != 0x00 and
                 (instruction.opcode | 1 not in [0x23, 0x25, 0x29, 0x2B] or noLoadStore)):
@@ -71,6 +70,10 @@ class Processor():
                 self.state.instrBuffer.remove(instruction)
                 if instruction.instrType in ["LOAD", "STORE"]:
                     self.setMemRegs(instruction)
+
+            if len(toBeIssued) == self.state.numExecuteUnits:
+                break;
+                
 
         numToBeIssued = len(toBeIssued)
         #print "Gonna issue " + str(numToBeIssued)
