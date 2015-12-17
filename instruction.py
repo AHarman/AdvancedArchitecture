@@ -123,7 +123,7 @@ class Instruction():
         return
 
     def __str__(self):
-        string = str(sum(self.waitingFor.values())) + " " + instructionText[self.opcode].ljust(4) + " "
+        string = format(sum(self.waitingFor.values()), " >2d") + " " + instructionText[self.opcode].ljust(4) + " "
         for i in self.registers:
             string += ("R" + str(i)).ljust(4)
         if self.immediate != None:
