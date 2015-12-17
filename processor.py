@@ -173,9 +173,20 @@ class Processor():
                             #print str(secondInstr) + " depends on " + str(firstInstr)
 
                         # If 1st instruction is a store and second is a load, we depend on it
-                        elif (firstInstr.instrType == "STORE") and (secondInstr.instrType in ["LOAD", "STORE"]):
+                        elif (firstInstr.instrType == "STORE") and (secondInstr.instrType  == "LOAD"):
                             secondInstr.addWait(firstInstr, 1)              # 1st instr needs to EXE before second EXE
                             #print str(secondInstr) + " depends on " + str(firstInstr)
+
+                        elif (firstInstr.instrType == "STORE") and (secondInstr.instrType  == "STORE"):
+                            secondInstr.addWait(firstInstr, 2)
+                            #print str(secondInstr) + " depends on " + str(firstInstr
+
+                        # If terminate, we need to depend on EVERYTHING
+                        elif secondInstr.opcode == 0xFF:
+                            if firstInstr.instrType == "BRANCH":
+                                secondInstr.addWait(firstInstr, 3)
+                            else:
+                                secondInstr.addWait(firstInstr, 1)
 
                         # If terminate, we need to depend on EVERYTHING
                         elif secondInstr.opcode == 0xFF:
