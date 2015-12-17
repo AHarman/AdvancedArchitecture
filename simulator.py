@@ -6,7 +6,7 @@ from processor import Processor
 import assembler
 
 
-def executeProgram(state, debug, numMemPrint):
+def executeProgram(state, debug, interactive, numMemPrint):
     logString = ""
     proc = Processor(state)
     cycleCount = 0
@@ -15,12 +15,13 @@ def executeProgram(state, debug, numMemPrint):
     while not state.finished and cycleCount < cycleLimit:
         thisLogString = ""
         if cycleCount > 0:
-            thisLogString += state.instrBufferToString()
-            thisLogString += state.pipelineToString()       + "\n"
-            thisLogString += state.specRegToString()        + "\n"
-            thisLogString += state.memToString(numMemPrint) + "\n" 
-            thisLogString += state.regToString()            + "\n**********\n"
             if debug:
+                thisLogString += state.instrBufferToString()
+                thisLogString += state.pipelineToString()       + "\n"
+                thisLogString += state.specRegToString()        + "\n"
+                thisLogString += state.memToString(numMemPrint) + "\n" 
+                thisLogString += state.regToString()            + "\n**********\n"
+            if interactive:
                 print thisLogString
                 raw_input("Press to continue")
         instructionCount += proc.run()
@@ -30,24 +31,26 @@ def executeProgram(state, debug, numMemPrint):
     print str(cycleCount) + " cycles run, with a limit of " + str(cycleLimit)
     print str(instructionCount) + " instructions executed (not including NOPs)"
     print str(float(instructionCount)/float(cycleCount)) + " instructions per cycle average"
-    logString += "\n\n\n\nFinal Memory: " + state.memToString(numMemPrint)
+    logString += "\n\nFinal Memory: " + state.memToString(numMemPrint)
     with open("log.out", 'w') as f:
         f.write(logString)
     return
 
 def getOptions():
     parser = OptionParser()
-    parser.add_option("-i", "--input",              action="store",     type="string",  dest="input",
-                         help="use as input file", metavar="FILE")
-    parser.add_option("-d", "--debug",              action="store_true",                dest="debug",           default=False,
-                         help="print state to stdout")
-    parser.add_option("-a", "--assemble",           action="store_true",                dest="assemble",        default=False,
-                         help="assemble program before running")
-    parser.add_option("-e", "--executeUnits",       action="store",     type="int",     dest="numExecuteUnits", default=1,
-                         help="number of execute units used")
-    parser.add_option("-b", "--instructionBuffer",  action="store",     type="int",     dest="instrBuffer",     default=0,
+    parser.add_option("-f", "--fileInput",          action="store",         type="string",  dest="input",
+                        help="use as input file", metavar="FILE")
+    parser.add_option("-d", "--debug",              action="store_true",                    dest="debug",           default=False,
+                        help="Write state each iteration")
+    parser.add_option("-i", "--interactive",        action="store_true",                    dest="interactive",     default=False,
+                        help="Print the state and pause every cycle")
+    parser.add_option("-a", "--assemble",           action="store_true",                    dest="assemble",        default=False,
+                        help="assemble program before running")
+    parser.add_option("-e", "--executeUnits",       action="store",         type="int",     dest="numExecuteUnits", default=1,
+                        help="number of execute units used")
+    parser.add_option("-b", "--instructionBuffer",  action="store",         type="int",     dest="instrBuffer",     default=0,
                         help="instruction buffer size. Minimum/default is executeUnits*6")
-    parser.add_option("-m", "--memoryPrinting",     action="store",     type="int",     dest="numMemPrint",     default=5,
+    parser.add_option("-m", "--memoryPrinting",     action="store",         type="int",     dest="numMemPrint",     default=5,
                         help="How much memory to print in logs/debug")
     (options, args) = parser.parse_args()
     return options
@@ -69,7 +72,7 @@ def main():
             program = f.read()
 
     state.loadProgram(program)
-    executeProgram(state, options.debug, options.numMemPrint)
+    executeProgram(state, options.debug, options.interactive, options.numMemPrint)
 
     return
 
