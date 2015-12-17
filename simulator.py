@@ -6,12 +6,11 @@ from processor import Processor
 import assembler
 
 
-def executeProgram(state, debug, interactive, numMemPrint):
+def executeProgram(state, debug, interactive, numMemPrint, cycleLimit):
     logString = ""
     proc = Processor(state)
     cycleCount = 0
     instructionCount = 0
-    cycleLimit = 100000
     while not state.finished and cycleCount < cycleLimit:
         thisLogString = ""
         if cycleCount > 0:
@@ -52,6 +51,8 @@ def getOptions():
                         help="instruction buffer size. Minimum/default is executeUnits*6")
     parser.add_option("-m", "--memoryPrinting",     action="store",         type="int",     dest="numMemPrint",     default=5,
                         help="How much memory to print in logs/debug")
+    parser.add_option("-c", "--cylceLimit",         action="store",         type="int",     dest="cycleLimit",      default=500000,
+                        help="An upper limit on cycles")
     (options, args) = parser.parse_args()
     return options
  
@@ -72,7 +73,7 @@ def main():
             program = f.read()
 
     state.loadProgram(program)
-    executeProgram(state, options.debug, options.interactive, options.numMemPrint)
+    executeProgram(state, options.debug, options.interactive, options.numMemPrint, options.cycleLimit)
 
     return
 
