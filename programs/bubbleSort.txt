@@ -1,0 +1,122 @@
+MVI  R0 1       //Outer loop counter
+LDI  R2 0       //How many numbers
+
+MVI  R1 1       "initialiseInnerLoop"   // Inner loop counter
+LD   R3 R1      "loadToCompare"
+LDAI R4 R1 1
+
+BRGI R4 R3 >pastSwap        // Maybe swap the two
+ST   R4 R1
+STAI R3 R1 1
+
+ADDI R1 R1 1    "pastSwap"  // Increment inner loop counter
+BRLI R1 R2 >loadToCompare   // End of inner loop
+
+ADDI R0 R0 1                // Increment outer loop counter
+
+
+BRNI R0 R2 >initialiseInnerLoop
+
+TERMINATE
+
+MEM   0 100     //How many numbers to sort are there
+MEM   1  99
+MEM   2  98
+MEM   3  97
+MEM   4  96
+MEM   5  95
+MEM   6  94
+MEM   7  93
+MEM   8  92
+MEM   9  91
+MEM  10  90
+MEM  11  89
+MEM  12  88
+MEM  13  87
+MEM  14  86
+MEM  15  85
+MEM  16  84
+MEM  17  83
+MEM  18  82
+MEM  19  81
+MEM  20  80
+MEM  21  79
+MEM  22  78
+MEM  23  77
+MEM  24  76
+MEM  25  75
+MEM  26  74
+MEM  27  73
+MEM  28  72
+MEM  29  71
+MEM  30  70
+MEM  31  69
+MEM  32  68
+MEM  33  67
+MEM  34  66
+MEM  35  65
+MEM  36  64
+MEM  37  63
+MEM  38  62
+MEM  39  61
+MEM  40  60
+MEM  41  59
+MEM  42  58
+MEM  43  57
+MEM  44  56
+MEM  45  55
+MEM  46  54
+MEM  47  53
+MEM  48  52
+MEM  49  51
+MEM  50  50
+MEM  51  49
+MEM  52  48
+MEM  53  47
+MEM  54  46
+MEM  55  45
+MEM  56  44
+MEM  57  43
+MEM  58  42
+MEM  59  41
+MEM  60  40
+MEM  61  39
+MEM  62  38
+MEM  63  37
+MEM  64  36
+MEM  65  35
+MEM  66  34
+MEM  67  33
+MEM  68  32
+MEM  69  31
+MEM  70  30
+MEM  71  29
+MEM  72  28
+MEM  73  27
+MEM  74  26
+MEM  75  25
+MEM  76  24
+MEM  77  23
+MEM  78  22
+MEM  79  21
+MEM  80  20
+MEM  81  19
+MEM  82  18
+MEM  83  17
+MEM  84  16
+MEM  85  15
+MEM  86  14
+MEM  87  13
+MEM  88  12
+MEM  89  11
+MEM  90  10
+MEM  91   9
+MEM  92   8
+MEM  93   7
+MEM  94   6
+MEM  95   5
+MEM  96   4
+MEM  97   3
+MEM  98   2
+MEM  99   1
+MEM 100   0
