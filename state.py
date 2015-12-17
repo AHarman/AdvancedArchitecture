@@ -34,7 +34,8 @@ class State():
     def instrBufferToString(self):
         string = "INSTR BUF:  " + str(self.instrBuffer[0]) + "\n"
         for instruction in list(self.instrBuffer)[1:]: 
-            string += "            " + str(instruction) + "\n"
+            if instruction.opcode != 0x00:
+                string += "            " + str(instruction) + "\n"
         return string
 
     def regToString(self, numRegs=5):
@@ -73,15 +74,18 @@ class State():
         
         string  = "MEM ACCESS: " + str(self.pipeline[2][0]) + "\n"
         for instruction in self.pipeline[2][1:]:
-            string += "            " + str(instruction) + "\n"
+            if instruction.opcode != 0x00:
+                string += "            " + str(instruction) + "\n"
         
         string += "EXECUTE:    " + str(self.pipeline[1][0]) + "\n"
         for instruction in self.pipeline[1][1:]:
-            string += "            " + str(instruction) + "\n"
+            if instruction.opcode != 0x00:
+                string += "            " + str(instruction) + "\n"
         
         string += "WRITE BACK: " + str(self.pipeline[0][0]) + "\n"
         for instruction in self.pipeline[0][1:]:
-            string += "            " + str(instruction) + "\n"
+            if instruction.opcode != 0x00:
+                string += "            " + str(instruction) + "\n"
         return string
 
     def loadProgram(self, programIn):
