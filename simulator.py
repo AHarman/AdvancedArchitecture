@@ -15,10 +15,10 @@ def executeProgram(state, debug):
     while not state.finished and cycleCount < cycleLimit:
         thisLogString = ""
         if cycleCount > 0:
-            #thisLogString += state.instrBufferToString()
-            #thisLogString += state.pipelineToString()    + "\n"
-            #thisLogString += state.specRegToString()     + "\n"
-            #thisLogString += state.memToString()         + "\n" 
+            thisLogString += state.instrBufferToString()
+            thisLogString += state.pipelineToString()    + "\n"
+            thisLogString += state.specRegToString()     + "\n"
+            thisLogString += state.memToString()         + "\n" 
             thisLogString += state.regToString()         + "\n**********\n"
             if debug:
                 print thisLogString
@@ -43,21 +43,23 @@ def executeProgram(state, debug):
 
 def getOptions():
     parser = OptionParser()
-    parser.add_option("-i", "--input", action="store", type="string", dest="input",
+    parser.add_option("-i", "--input",              action="store",     type="string",  dest="input",
                         help="use as input file", metavar="FILE")
-    parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False,
+    parser.add_option("-d", "--debug",              action="store_true",                dest="debug",           default=False,
                         help="print state to stdout")
-    parser.add_option("-a", "--assemble", action="store_true", dest="assemble", default=False,
+    parser.add_option("-a", "--assemble",           action="store_true",                dest="assemble",        default=False,
                         help="assemble program before running")
-    parser.add_option("-e", "--executeUnits", action="store", type="int", dest="numExecuteUnits", default=1,
+    parser.add_option("-e", "--executeUnits",       action="store",     type="int",     dest="numExecuteUnits", default=1,
                         help="number of execute units used")
+    parser.add_option("-b", "--instructionBuffer",  action ="store",    type="int",     dest="instrBuffer",     default=0,
+                        help="instruction buffer size. Minimum/default is executeUnits*6")
     (options, args) = parser.parse_args()
     return options
 
 def main():
     options = getOptions()
     
-    state = State(options.numExecuteUnits)
+    state = State(options.numExecuteUnits, options.instrBuffer)
     if options.assemble:
         with open(options.input) as f:
             program = f.read()

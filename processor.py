@@ -151,35 +151,36 @@ class Processor():
             #print "Considering: " + str(secondInstr)
             #print "Reads from:  " + str(secondInstr.reads)
             #print "Writes to:   " + str(secondInstr.writes)
-            for j in range(i):
-                firstInstr = instructions[j]
-                if firstInstr not in secondInstr.waitingFor:
-                    for reg in firstInstr.writes:    #If first instr writes what we read, wait
-                        if reg in secondInstr.reads:
-                            #print str(secondInstr) + " depends on " + str(firstInstr)
-                            if   firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["ARITH", "BRANCH"]:
-                                secondInstr.addWait(firstInstr, 2)      # 1st instr needs to WB before 2nd does EXE
-                            elif firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["LOAD", "STORE"]:
-                                secondInstr.addWait(firstInstr, 3)      # 1st instr needs to WB before 2nd does decode
-                    for reg in firstInstr.writes:
-                        if reg in secondInstr.writes:
-                            #print str(secondInstr) + " depends on " + str(firstInstr)
-                            secondInstr.addWait(firstInstr, 1)          # 1st instr needs to WB before 2nd does WB
+            if secondInstr.opcode != 0x00:
+                for j in range(i):
+                    firstInstr = instructions[j]
+                    if firstInstr not in secondInstr.waitingFor:
+                        for reg in firstInstr.writes:    #If first instr writes what we read, wait
+                            if reg in secondInstr.reads:
+                                #print str(secondInstr) + " depends on " + str(firstInstr)
+                                if   firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["ARITH", "BRANCH"]:
+                                    secondInstr.addWait(firstInstr, 2)      # 1st instr needs to WB before 2nd does EXE
+                                elif firstInstr.instrType in ["ARITH", "LOAD"] and secondInstr.instrType in ["LOAD", "STORE"]:
+                                    secondInstr.addWait(firstInstr, 3)      # 1st instr needs to WB before 2nd does decode
+                        for reg in firstInstr.writes:
+                            if reg in secondInstr.writes:
+                                #print str(secondInstr) + " depends on " + str(firstInstr)
+                                secondInstr.addWait(firstInstr, 1)          # 1st instr needs to WB before 2nd does WB
                     
-                    # If 1st instruction is branch, we depend on it
-                    if  (firstInstr.instrType == "BRANCH") and (firstInstr.opcode != 0xFF):
-                        secondInstr.addWait(firstInstr, 2)              # Branch needs to hit exe before we can do anything
-                        #print str(secondInstr) + " depends on " + str(firstInstr)
+                        # If 1st instruction is branch, we depend on it
+                        if  (firstInstr.instrType == "BRANCH") and (firstInstr.opcode != 0xFF):
+                                secondInstr.addWait(firstInstr, 2)              # Branch needs to hit exe before we can do anything
+                            #print str(secondInstr) + " depends on " + str(firstInstr)
 
-                    # If 1st instruction is a store and second is a load, we depend on it
-                    elif (firstInstr.instrType == "STORE") and (secondInstr.instrType in ["LOAD", "STORE"]):
-                        secondInstr.addWait(firstInstr, 1)              # 1st instr needs to EXE before second EXE
-                        #print str(secondInstr) + " depends on " + str(firstInstr)
+                        # If 1st instruction is a store and second is a load, we depend on it
+                        elif (firstInstr.instrType == "STORE") and (secondInstr.instrType in ["LOAD", "STORE"]):
+                            secondInstr.addWait(firstInstr, 1)              # 1st instr needs to EXE before second EXE
+                            #print str(secondInstr) + " depends on " + str(firstInstr)
 
-                    # If terminate, we need to depend on EVERYTHING
-                    elif secondInstr.opcode == 0xFF:
-                        if firstInstr.instrType == "BRANCH":
-                            secondInstr.addWait(firstInstr, 3)
-                        else:
-                            secondInstr.addWait(firstInstr, 1)
+                        # If terminate, we need to depend on EVERYTHING
+                        elif secondInstr.opcode == 0xFF:
+                            if firstInstr.instrType == "BRANCH":
+                                secondInstr.addWait(firstInstr, 3)
+                            else:
+                                secondInstr.addWait(firstInstr, 1)
         return
