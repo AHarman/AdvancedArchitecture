@@ -1,0 +1,10 @@
+MVI  R0  46         // Fib(47) 2971215073 is max
+MVI  R2   1
+
+ADD  R3  R1  R2     "fibStart"
+MV   R1  R2
+MV   R2  R3
+SUBI R0  R0  1
+BRNI R0  R15 >fibStart
+
+TERMINATE
