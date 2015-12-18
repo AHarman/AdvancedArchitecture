@@ -6,7 +6,7 @@ from processor import Processor
 import assembler
 
 
-def executeProgram(state, debug, interactive, numMemPrint, cycleLimit):
+def executeProgram(state, debug, interactive, numMemPrint, numRegPrint, cycleLimit):
     logString = ""
     proc = Processor(state)
     cycleCount = 0
@@ -19,7 +19,7 @@ def executeProgram(state, debug, interactive, numMemPrint, cycleLimit):
                 thisLogString += state.pipelineToString()       + "\n"
                 thisLogString += state.specRegToString()        + "\n"
                 thisLogString += state.memToString(numMemPrint) + "\n" 
-                thisLogString += state.regToString()            + "\n**********\n"
+                thisLogString += state.regToString(numRegPrint) + "\n**********\n"
             if interactive:
                 print thisLogString
                 raw_input("Press to continue")
@@ -52,6 +52,9 @@ def getOptions():
                         help="instruction buffer size. Minimum/default is executeUnits*6")
     parser.add_option("-m", "--memoryPrinting",     action="store",         type="int",     dest="numMemPrint",     default=5,
                         help="How much memory to print in logs/debug")
+    parser.add_option("-r", "--registerPrinting",   action="store",         type="int",     dest="numRegPrint",     default=5,
+                        help="How many registers to print in logs/debug")
+
     parser.add_option("-c", "--cylceLimit",         action="store",         type="int",     dest="cycleLimit",      default=500000,
                         help="An upper limit on cycles")
     (options, args) = parser.parse_args()
@@ -70,7 +73,7 @@ def main():
             program = f.read()
 
     state.loadProgram(program)
-    executeProgram(state, options.debug, options.interactive, options.numMemPrint, options.cycleLimit)
+    executeProgram(state, options.debug, options.interactive, options.numMemPrint, options.numRegPrint, options.cycleLimit)
 
     return
 
