@@ -1,10 +1,13 @@
-In order to assemble run a program, first assemble it with the command:
+All programs are in the "programs" directory.
 
-python assembler [filename]
+In order to run a program use the following command:
 
-This will produce an output file with the same name but the extension changed to .out.
-Run this program with the command
+python simulator.py -f path/to/program -a -e NUMBEROFEXECUTEUNITS
 
-python cpu.py [filename]
+Where NUMBEROFEXECUTEUNITS is the number of execute units you wish to use.
+I recommend capping this number at 16, although it can be set higher.
 
-test.txt and test.out have been included for testing.
+To enter interactive debug mode, use the option -id
+
+In order for a full list of options, use the command
+python simulator.py -h

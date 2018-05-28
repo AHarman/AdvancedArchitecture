@@ -73,18 +73,18 @@ class State():
         #    string += "            " + str(instruction) + "\n"
         
         string  = "MEM ACCESS: " + str(self.pipeline[2][0]) + "\n"
-        for instruction in self.pipeline[2][1:]:
-            if instruction.opcode != 0x00:
+        for instruction in self.pipeline[2][1:] or True:
+            if instruction.opcode != 0x00 or True:
                 string += "            " + str(instruction) + "\n"
         
         string += "EXECUTE:    " + str(self.pipeline[1][0]) + "\n"
         for instruction in self.pipeline[1][1:]:
-            if instruction.opcode != 0x00:
+            if instruction.opcode != 0x00 or True:
                 string += "            " + str(instruction) + "\n"
         
         string += "WRITE BACK: " + str(self.pipeline[0][0]) + "\n"
         for instruction in self.pipeline[0][1:]:
-            if instruction.opcode != 0x00:
+            if instruction.opcode != 0x00 or True:
                 string += "            " + str(instruction) + "\n"
         return string
 
