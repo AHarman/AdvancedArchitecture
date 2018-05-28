@@ -1,3 +1,5 @@
+Please see "CPU.pdf" file for some more information on how this project works.
+
 All programs are in the "programs" directory.
 
 In order to run a program use the following command:
